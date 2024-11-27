@@ -1,0 +1,20 @@
+# Empty environment
+maxent_mon_minigrid.register_environment.env_id = 'MiniGrid-MaxEntEmpty-v0'
+
+MaxEntMonMiniGridEnv.directional = True
+MaxEntMonMiniGridEnv.agent_pos = None
+MaxEntMonMiniGridEnv.goal_pos = None
+MaxEntMonMiniGridEnv.ascii_grid = """
+*************
+*s     llgll*
+*      lllll*
+*      lllll*
+*           *
+*           *
+*           *
+*           *
+*           *
+*        hhh*
+*        hhh*
+*        hhg*
+*************"""
