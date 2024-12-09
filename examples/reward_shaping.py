@@ -9,10 +9,9 @@ import matplotlib.pylab as plt
 import numpy as np
 import pickle
 from os.path import join
-from tqdm import tqdm
+#from tqdm import tqdm
 import random
 
-from minigrid_basics.examples.td_learner import TD_Learner
 from minigrid_basics.custom_wrappers import maxent_mdp_wrapper
 from minigrid_basics.envs import maxent_mon_minigrid
 from minigrid_basics.examples.rep_utils import *
@@ -92,7 +91,6 @@ def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interva
 
     timesteps = []
     ret_evals = []
-
     s = env.reset()
     for n in range(max_iter):
 
