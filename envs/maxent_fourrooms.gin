@@ -6,7 +6,7 @@ MaxEntMonMiniGridEnv.agent_pos = None
 MaxEntMonMiniGridEnv.goal_pos = None
 MaxEntMonMiniGridEnv.ascii_grid = """
 *************
-*s    *    g*
+*s    *     *
 *     *     *
 *           *
 *     *     *
@@ -14,15 +14,15 @@ MaxEntMonMiniGridEnv.ascii_grid = """
 ** ****     *
 *     *** ***
 *     *     *
-*     *     *
+*     *g    *
 *           *
-*g    *    g*
+*     *     *
 *************"""
 
 MaxEntMonMiniGridEnv.reward_dict = {
   "g": 0,   # goal aka terminal states have 0 reward (could be anything)
-  "s": -10,
-  ' ': -10,
+  "s": -2,
+  ' ': -2,
   'l': -20,
   'm': -4,
   'h': -1.5,

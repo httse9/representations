@@ -6,11 +6,11 @@ MaxEntMonMiniGridEnv.agent_pos = None
 MaxEntMonMiniGridEnv.goal_pos = None
 MaxEntMonMiniGridEnv.ascii_grid = """
 ***************
-* llll *      *
-* llll *      *
-*sllll        *
-* llll *      *
-* llll *      *
+*      *      *
+*      *      *
+*s            *
+*      *      *
+*      *      *
 *      *  g   *
 ***************"""
 

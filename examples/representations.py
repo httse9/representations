@@ -89,6 +89,29 @@ def main(argv):
     env = maxent_mdp_wrapper.MDPWrapper(env)
     # env = coloring_wrapper.ColoringWrapper(env)
 
+    print(env.raw_grid)
+    n_rows, n_cols = env.raw_grid.shape
+    image = np.ones((n_rows, n_cols, 3))
+
+    for i in range(n_rows):
+        for j in range(n_cols):
+            if env.raw_grid[i, j] == '*':
+                image[i, j] *= 0.5
+            
+    # indicate agent position with red
+    image[1, 1, 1:] = 0
+    image[1, 1, 0] = 1 
+
+    # indicate goal position with green
+    image[-2, -2, [0, 2]] = 0
+    image[-2, -2, 1] = 1
+
+    plt.imshow(image)
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
+    quit()
+
 
     R = env.rewards
     P = env.transition_probs

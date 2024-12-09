@@ -143,7 +143,7 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
     self._mission = mission
     self._build_raw_grid()
     self.raw_grid = self._raw_grid  # for easy access..
-
+    
     self.reward_dict = reward_dict
     self._build_reward_grid()
     super().__init__(width=self.width, height=self.height,
