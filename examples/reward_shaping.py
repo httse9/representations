@@ -217,6 +217,73 @@ def MER_aux_reward(env, i=0):
 
     return e0
 
+def load_setting(path, rep, i_eigen, r_shaped_weight, lr, n_seeds=20):
+
+    
+    datas = []
+    for seed in range(1, n_seeds + 1):
+
+        # construct file name
+        exp_name = [rep, i_eigen, r_shaped_weight, lr, seed]
+        exp_name = [str(x) for x in exp_name]
+        exp_name = '-'.join(exp_name) 
+
+        with open(join(path, exp_name + ".pkl"), "rb") as f:
+            data = pickle.load(f)
+
+        datas.append(data['perf'])
+
+    # plot_mean_and_conf_interval(data['t'], datas, label=exp_name)
+    return data['t'], datas, exp_name
+
+
+def plot(env_id):
+
+
+    path = join("minigrid_basics", "experiments", "reward_shaping", env_id)
+
+
+    # best for baseline
+    x, y, name = load_setting(path, "baseline", 0, 0.0, 0.3)
+    plot_mean_and_conf_interval(x, y, label=name, color="black", alpha=1)
+
+
+    r_shaped_weights = [0.25, 0.5, 0.75, 1.0]
+    def construct_alphas(settings):
+        n = len(settings)
+        alphas = np.linspace(0.5, 1, n + 1)[1:]
+        return alphas
+    
+    def construct_colors(settings, rgb=0):
+        n = len(settings)
+        c_values = np.linspace(0.1, 1, n)
+        
+        colors = np.zeros((n, 3))
+        colors[:, rgb] = c_values
+        return colors
+
+
+    
+
+    for rep, best_lr, color in zip(["SR", "MER"], [1.0, 1.0], ['red', 'blue']):
+        for i_eigen in [0]:
+            for r_shaped_weight, alpha in zip(r_shaped_weights, construct_alphas(r_shaped_weights)):
+
+                # for lr in [0.1, 0.3, 1.0]:
+                    # x, y, name = load_setting(path, rep, i_eigen, r_shaped_weight, lr)
+                    # plot_mean_and_conf_interval(x, y, label=name)
+
+                x, y, name = load_setting(path, rep, i_eigen, r_shaped_weight, best_lr)
+                plot_mean_and_conf_interval(x, y, label=name, color=color, alpha=alpha)
+
+    plt.legend()
+    plt.ylim([-300, None])
+    plt.xlabel("Number of Timesteps")
+    plt.ylabel("Undiscounted Return")
+    plt.show()
+
+
+
 def main(argv):
     # print(argv)
     if len(argv) > 1:
@@ -227,6 +294,10 @@ def main(argv):
         bindings=FLAGS.gin_bindings,
         skip_unknown=False)
     env_id = maxent_mon_minigrid.register_environment()
+
+    if FLAGS.plot:
+        plot(env_id)
+        quit()
 
     ##############################
     ### Make env

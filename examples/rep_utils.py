@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def compute_SR(env, gamma=0.99):
     """
@@ -136,3 +137,19 @@ def eval_policy(env, pi, gamma=0.99, n_episodes=10):
         return_list.append(episode_return)
 
     return np.mean(return_list)
+
+def plot_mean_and_conf_interval(x, y, label, color, alpha):
+
+    """
+    x: x axis
+    y: data, each row contains one trial
+    """
+    y_mean = np.mean(y, axis=0)
+    y_std = np.std(y, axis=0)
+
+    n_trials = np.array(y).shape[0]
+
+    y_interval = 1.96 / np.sqrt(n_trials) * y_std
+
+    plt.plot(x, y_mean, label=label, color=color, alpha=alpha)
+    plt.fill_between(x, y_mean - y_interval, y_mean + y_interval, alpha=0.05, color=color)
