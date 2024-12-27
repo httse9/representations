@@ -314,6 +314,13 @@ def main(argv):
     # plt.show()
     # quit()
 
+    if FLAGS.representation in ["SR", "DR", "MER"]:
+        # equivalent to no reward shaping..
+        if FLAGS.r_shaped_weight == 0:
+            quit()
+
+
+
     
     if FLAGS.representation == 'SR':
         reward_shaped = SR_aux_reward(env, i=FLAGS.i_eigen)
