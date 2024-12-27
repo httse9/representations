@@ -11,9 +11,11 @@ import pickle
 from os.path import join
 #from tqdm import tqdm
 import random
+from matplotlib import cm
 
 from minigrid_basics.custom_wrappers import maxent_mdp_wrapper
 from minigrid_basics.envs import maxent_mon_minigrid
+from minigrid_basics.examples.rep_utils import construct_value_pred_map
 from minigrid_basics.examples.rep_utils import *
 
 import warnings
@@ -39,49 +41,6 @@ flags.DEFINE_float('r_shaped_weight', 0.5, 'Learning rate for Q-Learning.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('i_eigen', 0, 'Which eigenvector to use. 0: top eigenvector')
 
-
-def construct_value_pred_map(env, value_prediction, contain_goal_value=False):
-    """
-    Take the vector of predicted values, and visualize in the environment map.
-
-    Params:
-    value_prediction: vector of predicted state values, shape (S)
-    contain_goal_value: whether the input value_prediction contains the value \ 
-        prediction of goal values. If False, 
-    """
-    state_num = 0
-    value_pred_map = np.zeros(env.reward_grid.shape) - float('-inf')
-
-    for i in range(env.height):
-        for j in range(env.width):
-            if env.reward_grid.T[i, j] == 1:
-                # skip wall
-                continue
-
-            if not contain_goal_value:
-                if env.raw_grid.T[i, j] == 'g':
-                    value_pred_map[i, j] = env.reward_grid.T[i, j]
-                    continue
-
-
-            value_pred_map[i, j] = value_prediction[state_num]
-            state_num += 1
-
-    return value_pred_map
-
-def plot_value_pred_map(env, value_prediction, contain_goal_value=False, v_range=(None, None)):
-    map = construct_value_pred_map(env, value_prediction, contain_goal_value=contain_goal_value)
-
-    vmin, vmax = v_range
-    plt.imshow(map, vmin=vmin, vmax=vmax)
-    plt.xticks([])
-    plt.yticks([])
-
-    # matplotlib.rcParams.update({'font.size': 5})
-    for (j, i), label in np.ndenumerate(map):
-        if not np.isinf(label):
-            plt.text(i, j, np.round(label, 1), ha='center', va='center', color='white', \
-                     fontsize= 'xx-small')
 
 def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interval=1000, \
             r_shaped_weight=0.5):
@@ -156,7 +115,9 @@ def SR_aux_reward(env, i=0):
     """
     i: the (i + 1)-th top eigenvector. Default is top eigenvector
     """
-    terminal_idx = np.where(~env.nonterminal_idx)[0][0]
+    # terminal_idx = np.where(~env.nonterminal_idx)[0][0]
+    terminal_idx = env.terminal_idx[0]
+
     SR = compute_SR(env)
     if not np.allclose(SR, SR.T):   # handle assymetry, avoid imaginary numbers
         SR = (SR + SR.T) / 2
@@ -172,9 +133,13 @@ def SR_aux_reward(env, i=0):
 
     return e0
 
-def MER_aux_reward(env, i=0):
-    terminal_idx = np.where(~env.nonterminal_idx)[0][0]
-    DR = compute_MER(env)
+def DR_MER_aux_reward(env, i=0, mode="MER"):
+    # terminal_idx = np.where(~env.nonterminal_idx)[0][0]
+    terminal_idx = env.terminal_idx[0]
+    if mode == "MER":
+        DR = compute_MER(env)
+    else:
+        DR = compute_DR(env)
 
     if not np.allclose(DR, DR.T): # handle asymmetry
         DR = (DR + DR.T) / 2
@@ -182,7 +147,7 @@ def MER_aux_reward(env, i=0):
     lamb, e = np.linalg.eig(DR)
     idx = lamb.argsort()
     e = e.T[idx[::-1]]
-    e0 = np.real(e[i])
+    e0 = np.real(e[i])      # get i-th eigenvector
 
     if (e0 < 0).astype(int).sum() > len(e0) / 2:
         e0 *= -1
@@ -212,6 +177,7 @@ def MER_aux_reward(env, i=0):
                     pass
             e0_copy[i] = np.mean(neighbor_values)
     e0 = e0_copy
+
     e0 = - np.abs(e0[terminal_idx] - e0)      # shaped reward
     e0 /= np.abs(e0).max()  # normalize
 
@@ -304,41 +270,67 @@ def main(argv):
     ##############################
     # do not treat goal as absorbing
     env = gym.make(env_id, seed=FLAGS.seed)
-    env = maxent_mdp_wrapper.MDPWrapper(env)
+    env = maxent_mdp_wrapper.MDPWrapper(env, )
 
     env_eval = gym.make(env_id, seed=FLAGS.seed)
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
+    
 
     # SR_e0 = SR_aux_reward(env)
-    # DR_e0 = DR_aux_reward(env)
+    # DR_e0 = MER_aux_reward(env)
 
-    # plt.subplot(2, 3, 1)
-    # plot_value_pred_map(env, env.rewards, contain_goal_value=True)
-    # plt.subplot(2, 3, 2)
-    # plot_value_pred_map(env, SR_e0 * 10, contain_goal_value=True)
-    # plt.subplot(2, 3, 3)
-    # plot_value_pred_map(env, SR_e0 * 10 + env.rewards, contain_goal_value=True)
-    # plt.subplot(2, 3, 4)
-    # plot_value_pred_map(env, env.rewards, contain_goal_value=True)
-    # plt.subplot(2, 3, 5)
-    # plot_value_pred_map(env, DR_e0 * 10, contain_goal_value=True)
-    # plt.subplot(2, 3, 6)
-    # plot_value_pred_map(env, DR_e0 * 10 + env.rewards, contain_goal_value=True)
+    ### Plot shaped reward of the DR and the SR
+    # fig = plt.figure(figsize=plt.figaspect(0.5))
+    # ax = fig.add_subplot(1, 2, 1, projection='3d')
+    # SR_value_map = construct_value_pred_map(env, SR_e0, contain_goal_value=True).T
+    # SR_value_map[np.isinf(SR_value_map)] = np.median(SR_value_map[~np.isinf(SR_value_map)])
+
+    # get rid of walls
+    # SR_value_map = SR_value_map[1:-1, 1:-1]
+
+    # SR_value_map = np.rot90(SR_value_map, k=2).T
+
+    # x, y = SR_value_map.shape
+    # x, y = np.meshgrid(range(x), range(y))
+    # ax.plot_surface(x, y, SR_value_map, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    # ax.title.set_text("SR")
+
+
+    # ax = fig.add_subplot(1, 2, 2, projection='3d')
+    # DR_value_map = construct_value_pred_map(env, DR_e0, contain_goal_value=True).T
+    # DR_value_map[np.isinf(DR_value_map)] = np.median(DR_value_map[~np.isinf(DR_value_map)])
+    # DR_value_map = DR_value_map[1:-1, 1:-1]
+    # DR_value_map = np.rot90(DR_value_map, k=2).T
+    # ax.plot_surface(x, y, DR_value_map, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    # ax.title.set_text("MER")
     # plt.show()
+
+    # quit()
+
+    # plt.subplot(1, 2, 1)
+    # plot_value_pred_map(env, SR_e0, contain_goal_value=True)
+    # plt.subplot(1, 2, 2)
+    # plot_value_pred_map(env, DR_e0, contain_goal_value=True)
+    # plt.show()
+    # quit()
 
     
     if FLAGS.representation == 'SR':
         reward_shaped = SR_aux_reward(env, i=FLAGS.i_eigen)
+    elif FLAGS.representation == "DR":
+        reward_shaped = DR_MER_aux_reward(env, i=FLAGS.i_eigen, mode="DR")
     elif FLAGS.representation == 'MER':
-        reward_shaped = MER_aux_reward(env, i=FLAGS.i_eigen)
+        reward_shaped = DR_MER_aux_reward(env, i=FLAGS.i_eigen, mode="MER")
     elif FLAGS.representation == 'baseline':
+        # no reward shaping
         reward_shaped = np.zeros((env.num_states))
+        FLAGS.r_shaped_weight = 0.
 
     # set seed
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
 
-    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=20000, log_interval=500, \
+    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=20000, log_interval=50, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
     
     # plt.plot(t, performance)
@@ -360,17 +352,6 @@ def main(argv):
         pickle.dump(data_dict, f)
 
 
-    # Q, SR_performance = q_learning(env, env_eval, SR_e0, max_iter=20000, log_interval=500)
-    # DR_e0 = DR_aux_reward(env)
-    # Q, DR_performance = q_learning(env, env_eval, DR_e0, max_iter=20000, log_interval=500)
-    # Q, DR_performance_aux_only = q_learning(env, env_eval, DR_e0,  max_iter=20000, log_interval=500, r_orig_weight=0)
-    # Q, baseline_performance = q_learning(env, env_eval, np.zeros((env.num_states)), max_iter=20000, log_interval=500)
-    # plt.plot(SR_performance, label='SR', alpha=0.5)
-    # plt.plot(DR_performance, label='DR', alpha=0.5)
-    # plt.plot(DR_performance_aux_only, label='DR aux', alpha=0.5)
-    # plt.plot(baseline_performance, label="Base", alpha=0.5)
-    # plt.legend()
-    # plt.show()
     
 
 if __name__ == '__main__':
@@ -400,18 +381,18 @@ if __name__ == '__main__':
 
 # # handle negative entries in DR #1
 # # replace with smallest absolute value of DR
-# # there exists some black holes
+# # there exists some black holes (reject, replaced value is too small)
 # min_abs_v = np.abs(e0).min()
 # e0[e0 < 0] = min_abs_v
 
-# # handle negative entries in DR #2    (reject)
+# # handle negative entries in DR #2   (reject, removes too much information, changes all values)
 # # shift whole matrix value upwards
 # min_abs_v = np.abs(e0).min()
 # if (e0 < 0).any():
 #     e0 -= e0.min()
 #     e0 += min_abs_v
 
-# # handle #3 (reject)
+# # handle #3 (reject, values very different from neighbors)
 # # simply flip negative entries
 # e0[e0 < 0] *= -1
 

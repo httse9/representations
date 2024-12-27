@@ -153,3 +153,46 @@ def plot_mean_and_conf_interval(x, y, label, color, alpha):
 
     plt.plot(x, y_mean, label=label, color=color, alpha=alpha)
     plt.fill_between(x, y_mean - y_interval, y_mean + y_interval, alpha=0.05, color=color)
+
+def construct_value_pred_map(env, value_prediction, contain_goal_value=False):
+    """
+    Take the vector of predicted values, and visualize in the environment map.
+
+    Params:
+    value_prediction: vector of predicted state values, shape (S)
+    contain_goal_value: whether the input value_prediction contains the value \ 
+        prediction of goal values. If False, 
+    """
+    state_num = 0
+    value_pred_map = np.zeros(env.reward_grid.shape) - float('-inf')
+
+    for i in range(env.height):
+        for j in range(env.width):
+            if env.reward_grid.T[i, j] == 1:
+                # skip wall
+                continue
+
+            if not contain_goal_value:
+                if env.raw_grid.T[i, j] == 'g':
+                    value_pred_map[i, j] = env.reward_grid.T[i, j]
+                    continue
+
+
+            value_pred_map[i, j] = value_prediction[state_num]
+            state_num += 1
+
+    return value_pred_map
+
+def plot_value_pred_map(env, value_prediction, contain_goal_value=False, v_range=(None, None)):
+    map = construct_value_pred_map(env, value_prediction, contain_goal_value=contain_goal_value)
+
+    vmin, vmax = v_range
+    plt.imshow(map, vmin=vmin, vmax=vmax)
+    plt.xticks([])
+    plt.yticks([])
+
+    # matplotlib.rcParams.update({'font.size': 5})
+    for (j, i), label in np.ndenumerate(map):
+        if not np.isinf(label):
+            plt.text(i, j, np.round(label, 1), ha='center', va='center', color='white', \
+                     fontsize= 'xx-small')

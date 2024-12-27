@@ -12,15 +12,15 @@ MaxEntMonMiniGridEnv.ascii_grid = """
 *s    *     *
 *     *     *
 ** ****     *
-*  ll *** ***
-* lll *     *
-* lll *g    *
+*  lll*** ***
+* llll*     *
+* llll*g    *
 * llll      *
 *     *     *
 *************"""
 
 MaxEntMonMiniGridEnv.reward_dict = {
-  "g": 0,   # goal aka terminal states have 0 reward (could be anything)
+  "g": -0,   # goal aka terminal states have 0 reward (could be anything)
   "s": -2,
   ' ': -2,
   'l': -10,

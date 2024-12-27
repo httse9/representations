@@ -69,6 +69,8 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
     self.rewards = np.zeros((self.num_states, ))    # reward only depends on state
     env = self.unwrapped
 
+    self.terminal_idx = []
+
     # state numbers are ordered starting from 1st row (left to right), 
     # then 2nd row, then ...
     for y in range(self.height):
@@ -85,8 +87,10 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
         if cell is not None and cell.type == 'goal':
           # ignore transition, cause transition prob from goal is all zeros
           # set reward of goal states
-          self.rewards[s1] = self.reward_dict[env._raw_grid[x, y]] 
 
+          self.terminal_idx.append(s1)
+
+          self.rewards[s1] = self.reward_dict[env._raw_grid[x, y]] 
           if goal_absorbing:
             # if treat goal as absorbing state
             for a in range(self.num_actions):
