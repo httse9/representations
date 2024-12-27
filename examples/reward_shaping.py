@@ -324,7 +324,8 @@ def main(argv):
     elif FLAGS.representation == 'baseline':
         # no reward shaping
         reward_shaped = np.zeros((env.num_states))
-        FLAGS.r_shaped_weight = 0.
+        if FLAGS.r_shaped_weight != 0:
+            quit()      # r_shaped_weight only valid value is 0 when not reward shaping
 
     # set seed
     np.random.seed(FLAGS.seed)
