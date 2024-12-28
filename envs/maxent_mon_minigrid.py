@@ -254,4 +254,7 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
     x, y = self.agent_pos   
 
     return self.reward_dict[self._raw_grid[x, y]]
+  
+  def reward(self):
+    return self._reward()
 
