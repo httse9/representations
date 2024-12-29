@@ -302,7 +302,7 @@ def main(argv):
         quit()
 
 
-    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=20000, log_interval=50, \
+    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=50, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
     
     exp_name = [FLAGS.representation, FLAGS.rep_learn_n_episodes, FLAGS.i_eigen, FLAGS.r_shaped_weight, FLAGS.lr, FLAGS.seed]
