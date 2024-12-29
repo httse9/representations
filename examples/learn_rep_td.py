@@ -60,7 +60,7 @@ def compute_rep_TD(env, mode="SR", alpha=0.03):
     mae_list = []       # max absolute error
     mse_list = []       # mean squared error
 
-    for e in range(10000):   # enumerate over episodes
+    for e in range(20000):   # enumerate over episodes
 
         s = env.reset()
         done = False
