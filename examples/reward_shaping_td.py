@@ -74,7 +74,13 @@ def compute_rep_TD(env):
     n_states = env.num_states
     n_actions = env.num_actions
 
-    D = np.zeros((n_states, n_states))
+
+    if mode == "SR":
+        D = np.zeros((n_states, n_states))
+    elif mode == "DR":
+        D = np.eye(n_states)
+    elif mode == "MER":
+        D = np.eye(n_states) * n_actions
 
     for _ in range(n_episodes):   # enumerate over episodes
 
@@ -96,16 +102,13 @@ def compute_rep_TD(env):
                 D[s['state']] += alpha * ((indicator + D[ns['state']]) * np.exp(r) * n_actions - D[s['state']])
 
             if terminated:
-                # for terminal state, we immediately know value given reward
                 r_terminal = env.reward()
                 if mode == 'SR':
-                    D[ns['state'], ns['state']] = 1
-
+                    D[ns['state'], ns['state']] += alpha * (1 - D[ns['state'], ns['state']])
                 elif mode == "DR":
-                    D[ns['state'], ns['state']] = np.exp(r_terminal)
-
+                    D[ns['state'], ns['state']] += alpha * (np.exp(r_terminal) - D[ns['state'], ns['state']])
                 elif mode == "MER":
-                    D[ns['state'], ns['state']] = np.exp(r_terminal) * n_actions
+                    D[ns['state'], ns['state']] += alpha * (np.exp(r_terminal) * n_actions - D[ns['state'], ns['state']])
 
             s = ns
     
