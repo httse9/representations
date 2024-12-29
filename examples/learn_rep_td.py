@@ -69,14 +69,6 @@ def compute_rep_TD(env, mode="SR", alpha=0.03):
             ns, r, done, d = env.step(a)
             terminated = d['terminated']
 
-            # if mode == "SR":
-            #     alpha = 1 / np.sqrt(e + 1)
-            # if mode == "DR":
-            #     alpha = 1 / np.sqrt(e + 1) * 3      # decaying learning rate to speed up learning
-            # if mode == "MER":
-            #     alpha = 1 / np.sqrt(e + 1) * 2
-
-
             indicator = np.zeros(n_states)
             indicator[s['state']] = 1
 
@@ -137,7 +129,6 @@ def main(argv):
 
     # learn representation by TD
     mae, mse = compute_rep_TD(env, mode=FLAGS.representation, alpha=FLAGS.lr)
-
 
     exp_name = [FLAGS.representation, FLAGS.lr, FLAGS.seed]
     exp_name = [str(x) for x in exp_name]

@@ -35,11 +35,11 @@ flags.DEFINE_boolean('plot', False, 'When True, plot results of experiments. Whe
 
 # experiment flags
 flags.DEFINE_string('representation', 'baseline', 'The representation to use for reward shaping.')
-flags.DEFINE_float('lr', 0.3, 'Learning rate for Q-Learning.')
-# flags.DEFINE_float('r_orig_weight', 1.0, 'Learning rate for Q-Learning.')
-flags.DEFINE_float('r_shaped_weight', 0.5, 'Learning rate for Q-Learning.')
-flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('i_eigen', 0, 'Which eigenvector to use. 0: top eigenvector')
+flags.DEFINE_float('r_shaped_weight', 0.5, 'Learning rate for Q-Learning.')
+flags.DEFINE_float('lr', 0.3, 'Learning rate for Q-Learning.')
+flags.DEFINE_integer('seed', 0, 'Random seed.')
+
 
 
 def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interval=1000, \
