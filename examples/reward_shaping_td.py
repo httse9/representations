@@ -81,6 +81,7 @@ def compute_rep_TD(env):
         D = np.eye(n_states)
     elif mode == "MER":
         D = np.eye(n_states) * n_actions
+        # D = np.zeros((n_states, n_states)) 
 
     for _ in range(n_episodes):   # enumerate over episodes
 
@@ -93,6 +94,7 @@ def compute_rep_TD(env):
 
             indicator = np.zeros(n_states)
             indicator[s['state']] = 1
+
 
             if mode == "SR":
                 D[s['state']] += alpha * (indicator + FLAGS.gamma * D[ns['state']] - D[s['state']])
@@ -197,9 +199,14 @@ def SR_aux_reward(env, i=0):
 
     # eigendecomposition
     lamb, e = np.linalg.eig(SR)
+    print(lamb)
     idx = lamb.argsort()
     e = e.T[idx[::-1]]
     e0 = np.real(e[i])  # largest eigenvector
+
+    plot_value_pred_map(env, e0, contain_goal_value=True)
+    plt.title("Eigenvctor")
+    plt.show()
 
     e0 = - np.abs(e0[terminal_idx] - e0)      # shaped reward
     e0 /= np.abs(e0).max()  # normalize
@@ -211,6 +218,22 @@ def DR_MER_aux_reward(env, i=0):
     terminal_idx = env.terminal_idx[0]
     DR = compute_rep_TD(env)
 
+    # # new attempt
+    # DR = (DR + DR.T) / 2
+    # print(DR[DR != 0].min())
+    # DR[DR == 0] = 1 # DR[DR != 0].max()
+    # DR = np.log(DR)
+    # plt.imshow(DR)
+    # plt.show()
+    # lamb, e = np.linalg.eig(DR)
+    # idx = lamb.argsort()
+    # e = e.T[idx[::-1]]
+    # e0 = np.real(e[i]) 
+    # e0 = - np.abs(e0[terminal_idx] - e0)      # shaped reward
+    # if np.abs(e0).max() > 0:
+    #     e0 /= np.abs(e0).max()  # normalize
+    # return e0, DR
+
     if not np.allclose(DR, DR.T): # handle asymmetry
         DR = (DR + DR.T) / 2
 
@@ -219,10 +242,25 @@ def DR_MER_aux_reward(env, i=0):
     e = e.T[idx[::-1]]
     e0 = np.real(e[i])      # get i-th eigenvector
 
-    if (e0 < 0).astype(int).sum() > len(e0) / 2:
+
+    # n_4 = (lamb == env.num_actions).astype(int).sum()
+    # print(n_4)
+
+    n_4 = (np.diag(DR) == env.num_actions).astype(int).sum()
+    if n_4 == 1:
+        n_4 = 0
+    e0 = np.real(e[n_4])
+
+    if (e0 < 0).astype(int).sum() > (e0 > 0).astype(int).sum():
         e0 *= -1
 
+    plot_value_pred_map(env, e0, contain_goal_value=True)
+    plt.title("Eigenvctor")
+    plt.show()
+
     # handle #6 careful interpolate after log
+    # e0 = np.abs(e0[terminal_idx] - e0)      # shaped reward
+    # print(e0)
     directions =np.array([
         [1, 0],
         [0, 1],
@@ -236,6 +274,7 @@ def DR_MER_aux_reward(env, i=0):
     for _ in range(env.num_states):  # repeatedly try to interpolate value from neighbors
         for i in range(len(e0_copy)):   # enumerate over all states
             if e0[i] <= 0:      # if value is invalid, try to replace by mean of neighbors
+
                 pos = np.array(env.state_to_pos[i])
                 neighbor_values = []
                 for d in directions:
@@ -256,7 +295,6 @@ def DR_MER_aux_reward(env, i=0):
 
     if np.abs(e0).max() > 0:
         e0 /= np.abs(e0).max()  # normalize
-   
 
     return e0, DR
 
@@ -296,9 +334,9 @@ def main(argv):
     else:
         raise ValueError()
     
-    # plot_value_pred_map(env, reward_shaped, contain_goal_value=True)
-    # plt.show()
-    # quit()
+    plot_value_pred_map(env, reward_shaped, contain_goal_value=True)
+    plt.show()
+    quit()
 
     
     if FLAGS.r_shaped_weight == 0: # equivalent to no reward shaping..
@@ -307,6 +345,10 @@ def main(argv):
 
     Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=50, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
+    
+    plt.plot(t, performance)
+    plt.show()
+    quit()
     
     exp_name = [FLAGS.representation, FLAGS.rep_learn_n_episodes, FLAGS.i_eigen, FLAGS.r_shaped_weight, FLAGS.lr, FLAGS.seed]
     exp_name = [str(x) for x in exp_name]
