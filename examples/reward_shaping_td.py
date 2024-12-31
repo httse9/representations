@@ -199,14 +199,13 @@ def SR_aux_reward(env, i=0):
 
     # eigendecomposition
     lamb, e = np.linalg.eig(SR)
-    print(lamb)
     idx = lamb.argsort()
     e = e.T[idx[::-1]]
     e0 = np.real(e[i])  # largest eigenvector
 
-    plot_value_pred_map(env, e0, contain_goal_value=True)
-    plt.title("Eigenvctor")
-    plt.show()
+    # plot_value_pred_map(env, e0, contain_goal_value=True)
+    # plt.title("Eigenvctor")
+    # plt.show()
 
     e0 = - np.abs(e0[terminal_idx] - e0)      # shaped reward
     e0 /= np.abs(e0).max()  # normalize
@@ -254,9 +253,9 @@ def DR_MER_aux_reward(env, i=0):
     if (e0 < 0).astype(int).sum() > (e0 > 0).astype(int).sum():
         e0 *= -1
 
-    plot_value_pred_map(env, e0, contain_goal_value=True)
-    plt.title("Eigenvctor")
-    plt.show()
+    # plot_value_pred_map(env, e0, contain_goal_value=True)
+    # plt.title("Eigenvctor")
+    # plt.show()
 
     # handle #6 careful interpolate after log
     # e0 = np.abs(e0[terminal_idx] - e0)      # shaped reward
@@ -334,9 +333,9 @@ def main(argv):
     else:
         raise ValueError()
     
-    plot_value_pred_map(env, reward_shaped, contain_goal_value=True)
-    plt.show()
-    quit()
+    # plot_value_pred_map(env, reward_shaped, contain_goal_value=True)
+    # plt.show()
+    # quit()
 
     
     if FLAGS.r_shaped_weight == 0: # equivalent to no reward shaping..
@@ -346,9 +345,9 @@ def main(argv):
     Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=50, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
     
-    plt.plot(t, performance)
-    plt.show()
-    quit()
+    # plt.plot(t, performance)
+    # plt.show()
+    # quit()
     
     exp_name = [FLAGS.representation, FLAGS.rep_learn_n_episodes, FLAGS.i_eigen, FLAGS.r_shaped_weight, FLAGS.lr, FLAGS.seed]
     exp_name = [str(x) for x in exp_name]
