@@ -173,7 +173,6 @@ def main(argv):
             pickle.dump(data_dict, f)
 
 
-    
 
 if __name__ == '__main__':
     app.run(main)
