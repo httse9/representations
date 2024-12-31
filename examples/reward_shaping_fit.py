@@ -69,15 +69,6 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
     """
     Simply run uniform random policy
     """
-    if mode == "SR":
-        ground_truth_M = compute_SR(env)
-    elif mode == "DR":
-        ground_truth_M = compute_DR(env)
-    elif mode == "MER":
-        ground_truth_M = compute_MER(env)
-    else:
-        raise ValueError(f"{mode} not recognized.")
-
     n_states = env.num_states
     n_actions = env.num_actions
 
@@ -87,13 +78,11 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
         D = np.eye(n_states)
     elif mode == "MER":
         D = np.eye(n_states) * n_actions
-
-
-    mae_list = []       # max absolute error
-    mse_list = []       # mean squared error
+    else:
+        raise ValueError(f"{mode} not recognized.")
 
     for n in range(300):   # repeat
-        D_old = D.copy()
+
         for (s, r, ns) in data:
             
             if ns is None:  # terminated
@@ -115,14 +104,8 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
                 D[s] += alpha * ((indicator + D[ns]) * np.exp(r) - D[s])
             elif mode == "MER":
                 D[s] += alpha * ((indicator + D[ns]) * np.exp(r) * n_actions - D[s])
-
-        mae = np.abs(D - D_old).max()
-        mae_list.append(mae)
-
-        mse = ((D - D_old) ** 2).mean()
-        mse_list.append(mse)
     
-    return ground_truth_M, D, mae_list, mse_list
+    return D
 
 
 def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interval=1000, \
