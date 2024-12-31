@@ -92,7 +92,7 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
     mae_list = []       # max absolute error
     mse_list = []       # mean squared error
 
-    for n in range(100):   # repeat
+    for n in range(300):   # repeat
         D_old = D.copy()
         for (s, r, ns) in data:
             
@@ -202,12 +202,7 @@ def SR_aux_reward(env, i=0):
     terminal_idx = env.terminal_idx[0]
 
     data = collect_data(env, FLAGS.n_episodes)
-
-    raise ValueError()
-    # TODO:
-    alpha = np.float('inf')
-    SR = fit_rep_TD(env, data, mode="SR", alpha=alpha)
-
+    SR = fit_rep_TD(env, data, mode="SR", alpha=0.3)
     
     if not np.allclose(SR, SR.T):   # handle assymetry, avoid imaginary numbers
         SR = (SR + SR.T) / 2
@@ -232,10 +227,7 @@ def DR_MER_aux_reward(env, i=0):
     terminal_idx = env.terminal_idx[0]
     data = collect_data(env, FLAGS.n_episodes)
 
-    raise ValueError()
-    # TODO:
-    alpha = np.float('inf')
-    DR = fit_rep_TD(env, data, FLAGS.representation, alpha=alpha)
+    DR = fit_rep_TD(env, data, FLAGS.representation, alpha=0.3)
 
     if not np.allclose(DR, DR.T): # handle asymmetry
         DR = (DR + DR.T) / 2
