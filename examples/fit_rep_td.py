@@ -86,7 +86,7 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
     mae_list = []       # max absolute error
     mse_list = []       # mean squared error
 
-    for n in range(100):   # repeat
+    for n in range(500):   # repeat
         D_old = D.copy()
         for (s, r, ns) in data:
             
@@ -144,6 +144,7 @@ def main(argv):
     # learn representation by TD
     data = collect_data(env, FLAGS.n_episodes)
 
+
     reps = ["SR", "MER"]
     Ms = []
     maes = []
@@ -154,6 +155,7 @@ def main(argv):
         Ms.append(M)
         maes.append(mae)
         mses.append(mse)
+
 
     for rep, M, mae, mse in zip(reps, Ms, maes, mses):
 
@@ -171,7 +173,6 @@ def main(argv):
 
         with open(join(path, exp_name), "wb") as f:
             pickle.dump(data_dict, f)
-
 
     
 
