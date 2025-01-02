@@ -71,36 +71,38 @@ def main(argv):
 
     # env_name = "MiniGrid-MaxEntFourRooms-v0"
     env_name = env_id
-    path = join("minigrid_basics", "experiments", "reward_shaping_td", env_name)
+    path = join("minigrid_basics", "experiments", "reward_shaping_fit", env_name)
 
     rep = "SR"
-    n_episodes = 100
+    n_episodes = 1000
     r_shaped_weight = 1.0
 
-    for n_episodes in [100, 500, 1000, 5000]:
+    for n_episodes in [100, 500, 1000]:
         reward_shaped_list = []
         M_list = []
         for seed in range(1, 21):
             with open(join(path, f"{rep}-{n_episodes}-0-{r_shaped_weight}-{1.0}-{seed}.pkl"), "rb") as f:
                 data = pickle.load(f)
 
+            # plot_3d(env, data['reward_shaped'])
+
             reward_shaped_list.append(data['reward_shaped'][None])
             M_list.append(data['M'][None])
 
         reward_shaped = np.concatenate(reward_shaped_list).mean(0)
+        plot_3d(env, reward_shaped)
         # reward_shaped /= np.abs(reward_shaped[0])
         # plot_value_pred_map(env, reward_shaped, contain_goal_value=True)
         # plt.show()
         
-        M = np.concatenate(M_list).mean(0)
-        if rep == "MER":
-            M = np.log(M)
-        plt.imshow(M)
-        plt.show()
+        # M = np.concatenate(M_list).mean(0)
+        # if rep == "MER":
+        #     M = np.log(M)
+        # plt.imshow(M)
+        # plt.show()
+
 
         
-
-        # plot_3d(env, reward_shaped)
 
 
 

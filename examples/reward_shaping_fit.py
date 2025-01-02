@@ -77,7 +77,8 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
     elif mode == "DR":
         D = np.eye(n_states)
     elif mode == "MER":
-        D = np.eye(n_states) * n_actions
+        # D = np.eye(n_states) * n_actions
+        D = np.zeros((n_states, n_states))
     else:
         raise ValueError(f"{mode} not recognized.")
 
@@ -218,12 +219,12 @@ def DR_MER_aux_reward(env, i=0):
     lamb, e = np.linalg.eig(DR)
     idx = lamb.argsort()
     e = e.T[idx[::-1]]
-    # e0 = np.real(e[i])      # get i-th eigenvector
+    e0 = np.real(e[i])      # get i-th eigenvector
 
-    n_4 = (np.diag(DR) == env.num_actions).astype(int).sum()
-    if n_4 == 1:
-        n_4 = 0
-    e0 = np.real(e[n_4])
+    # n_4 = (np.diag(DR) == env.num_actions).astype(int).sum()
+    # if n_4 == 1:
+    #     n_4 = 0
+    # e0 = np.real(e[n_4])
 
     if (e0 < 0).astype(int).sum() > (e0 > 0).astype(int).sum():
         e0 *= -1
@@ -327,7 +328,7 @@ def main(argv):
     exp_name = [FLAGS.representation, FLAGS.n_episodes, FLAGS.i_eigen, FLAGS.r_shaped_weight, FLAGS.lr, FLAGS.seed]
     exp_name = [str(x) for x in exp_name]
     exp_name = '-'.join(exp_name) + ".pkl"
-    path = join("minigrid_basics", "experiments", "reward_shaping_fit", env.unwrapped.spec.id,)
+    path = join("minigrid_basics", "experiments", "reward_shaping_fit_MER_init_0", env.unwrapped.spec.id,)
     os.makedirs(path, exist_ok=True)
 
     data_dict = dict(
