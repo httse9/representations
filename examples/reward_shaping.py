@@ -30,9 +30,6 @@ flags.DEFINE_multi_string(
     'Gin bindings to override default parameter values '
     '(e.g. "MonMiniGridEnv.stochasticity=0.1").')
 
-flags.DEFINE_boolean('plot', False, 'When True, plot results of experiments. When False, run the experiment.')
-
-
 # experiment flags
 flags.DEFINE_string('representation', 'baseline', 'The representation to use for reward shaping.')
 flags.DEFINE_integer('i_eigen', 0, 'Which eigenvector to use. 0: top eigenvector')
@@ -48,12 +45,15 @@ def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interva
     assert 0 <= r_shaped_weight <= 1
     Q = np.zeros((env.num_states, env.num_actions))
 
+    R = env.rewards
+    R_orig_max = np.abs(R).max()
+
     timesteps = []
     ret_evals = []
     s = env.reset()
     for n in range(max_iter):
 
-        if np.random.rand() < 0.05:
+        if np.random.rand() < 0.05:     # epsilon greedy
             a = np.random.choice(env.num_actions)
         else:
             a = np.argmax(Q[s['state']])
@@ -62,7 +62,8 @@ def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interva
         terminated = d['terminated']
 
         # shaped reward
-        r = r * (1 - r_shaped_weight) + reward_aux[s['state']] * r_shaped_weight
+        # convex combination of normalized orig and shaped rewards
+        r = r / R_orig_max * (1 - r_shaped_weight) + reward_aux[s['state']] * r_shaped_weight
 
         Q[s['state'], a] += alpha * (r + FLAGS.gamma * (1 - int(terminated)) * Q[ns['state']].max()  - Q[s['state'], a])
 
@@ -162,93 +163,33 @@ def DR_MER_aux_reward(env, i=0, mode="MER"):
     e0_copy = e0.copy()
     e0_copy[e0_copy <= 0] = 1
     e0_copy = np.log(e0_copy)
-    for i in range(len(e0_copy)):
-        if e0[i] <= 0:
-            pos = np.array(env.state_to_pos[i])
-            neighbor_values = []
-            for d in directions:
-                try:
-                    neighbor = pos + d
-                    # print("  ", neighbor)
-                    j = env.pos_to_state[neighbor[0] + neighbor[1] * env.width]
-                    if j >= 0 and e0[j] > 0:
-                        neighbor_values.append(e0_copy[j])
-                except:
-                    pass
-            e0_copy[i] = np.mean(neighbor_values)
+
+    for _ in range(env.num_states):  # repeatedly try to interpolate value from neighbors
+        for i in range(len(e0_copy)):   # enumerate over all states
+            if e0[i] <= 0:      # if value is invalid, try to replace by mean of neighbors
+
+                pos = np.array(env.state_to_pos[i])
+                neighbor_values = []
+                for d in directions:
+                    try:
+                        neighbor = pos + d
+                        # print("  ", neighbor)
+                        j = env.pos_to_state[neighbor[0] + neighbor[1] * env.width]
+                        if j >= 0 and e0[j] > 0:
+                            neighbor_values.append(e0_copy[j])
+                    except:
+                        pass
+                if len(neighbor_values) > 0:    # successful
+                    e0_copy[i] = np.mean(neighbor_values)
+                    e0[i] = 1
     e0 = e0_copy
 
     e0 = - np.abs(e0[terminal_idx] - e0)      # shaped reward
-    e0 /= np.abs(e0).max()  # normalize
+
+    if np.abs(e0).max() > 0:
+        e0 /= np.abs(e0).max()  # normalize
 
     return e0
-
-def load_setting(path, rep, i_eigen, r_shaped_weight, lr, n_seeds=20):
-
-    
-    datas = []
-    for seed in range(1, n_seeds + 1):
-
-        # construct file name
-        exp_name = [rep, i_eigen, r_shaped_weight, lr, seed]
-        exp_name = [str(x) for x in exp_name]
-        exp_name = '-'.join(exp_name) 
-
-        with open(join(path, exp_name + ".pkl"), "rb") as f:
-            data = pickle.load(f)
-
-        datas.append(data['perf'])
-
-    # plot_mean_and_conf_interval(data['t'], datas, label=exp_name)
-    return data['t'], datas, exp_name
-
-
-def plot(env_id):
-
-
-    path = join("minigrid_basics", "experiments", "reward_shaping", env_id)
-
-
-    # best for baseline
-    x, y, name = load_setting(path, "baseline", 0, 0.0, 0.3)
-    plot_mean_and_conf_interval(x, y, label=name, color="black", alpha=1)
-
-
-    r_shaped_weights = [0.25, 0.5, 0.75, 1.0]
-    def construct_alphas(settings):
-        n = len(settings)
-        alphas = np.linspace(0.5, 1, n + 1)[1:]
-        return alphas
-    
-    def construct_colors(settings, rgb=0):
-        n = len(settings)
-        c_values = np.linspace(0.1, 1, n)
-        
-        colors = np.zeros((n, 3))
-        colors[:, rgb] = c_values
-        return colors
-
-
-    
-
-    for rep, best_lr, color in zip(["SR", "MER"], [1.0, 1.0], ['red', 'blue']):
-        for i_eigen in [0]:
-            for r_shaped_weight, alpha in zip(r_shaped_weights, construct_alphas(r_shaped_weights)):
-
-                # for lr in [0.1, 0.3, 1.0]:
-                    # x, y, name = load_setting(path, rep, i_eigen, r_shaped_weight, lr)
-                    # plot_mean_and_conf_interval(x, y, label=name)
-
-                x, y, name = load_setting(path, rep, i_eigen, r_shaped_weight, best_lr)
-                plot_mean_and_conf_interval(x, y, label=name, color=color, alpha=alpha)
-
-    plt.legend()
-    plt.ylim([-300, None])
-    plt.xlabel("Number of Timesteps")
-    plt.ylabel("Undiscounted Return")
-    plt.show()
-
-
 
 def main(argv):
     # print(argv)
@@ -261,10 +202,6 @@ def main(argv):
         skip_unknown=False)
     env_id = maxent_mon_minigrid.register_environment()
 
-    if FLAGS.plot:
-        plot(env_id)
-        quit()
-
     ##############################
     ### Make env
     ##############################
@@ -274,53 +211,11 @@ def main(argv):
 
     env_eval = gym.make(env_id, seed=FLAGS.seed)
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
-    
-
-    # SR_e0 = SR_aux_reward(env)
-    # DR_e0 = MER_aux_reward(env)
-
-    ### Plot shaped reward of the DR and the SR
-    # fig = plt.figure(figsize=plt.figaspect(0.5))
-    # ax = fig.add_subplot(1, 2, 1, projection='3d')
-    # SR_value_map = construct_value_pred_map(env, SR_e0, contain_goal_value=True).T
-    # SR_value_map[np.isinf(SR_value_map)] = np.median(SR_value_map[~np.isinf(SR_value_map)])
-
-    # get rid of walls
-    # SR_value_map = SR_value_map[1:-1, 1:-1]
-
-    # SR_value_map = np.rot90(SR_value_map, k=2).T
-
-    # x, y = SR_value_map.shape
-    # x, y = np.meshgrid(range(x), range(y))
-    # ax.plot_surface(x, y, SR_value_map, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-    # ax.title.set_text("SR")
-
-
-    # ax = fig.add_subplot(1, 2, 2, projection='3d')
-    # DR_value_map = construct_value_pred_map(env, DR_e0, contain_goal_value=True).T
-    # DR_value_map[np.isinf(DR_value_map)] = np.median(DR_value_map[~np.isinf(DR_value_map)])
-    # DR_value_map = DR_value_map[1:-1, 1:-1]
-    # DR_value_map = np.rot90(DR_value_map, k=2).T
-    # ax.plot_surface(x, y, DR_value_map, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-    # ax.title.set_text("MER")
-    # plt.show()
-
-    # quit()
-
-    # plt.subplot(1, 2, 1)
-    # plot_value_pred_map(env, SR_e0, contain_goal_value=True)
-    # plt.subplot(1, 2, 2)
-    # plot_value_pred_map(env, DR_e0, contain_goal_value=True)
-    # plt.show()
-    # quit()
 
     if FLAGS.representation in ["SR", "DR", "MER"]:
         # equivalent to no reward shaping..
         if FLAGS.r_shaped_weight == 0:
             quit()
-
-
-
     
     if FLAGS.representation == 'SR':
         reward_shaped = SR_aux_reward(env, i=FLAGS.i_eigen)
@@ -338,11 +233,9 @@ def main(argv):
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
 
-    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=20000, log_interval=50, \
+    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=10, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
     
-    # plt.plot(t, performance)
-    # plt.show()
 
     exp_name = [FLAGS.representation, FLAGS.i_eigen, FLAGS.r_shaped_weight, FLAGS.lr, FLAGS.seed]
     exp_name = [str(x) for x in exp_name]

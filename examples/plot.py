@@ -71,9 +71,9 @@ def main(argv):
 
     # env_name = "MiniGrid-MaxEntFourRooms-v0"
     env_name = env_id
-    path = join("minigrid_basics", "experiments", "reward_shaping_fit", env_name)
+    path = join("minigrid_basics", "experiments", "reward_shaping_fit_MER_init_0", env_name)
 
-    rep = "SR"
+    rep = "MER"
     n_episodes = 1000
     r_shaped_weight = 1.0
 

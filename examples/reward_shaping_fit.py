@@ -72,17 +72,9 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
     n_states = env.num_states
     n_actions = env.num_actions
 
-    if mode == "SR":
-        D = np.zeros((n_states, n_states))
-    elif mode == "DR":
-        D = np.eye(n_states)
-    elif mode == "MER":
-        # D = np.eye(n_states) * n_actions
-        D = np.zeros((n_states, n_states))
-    else:
-        raise ValueError(f"{mode} not recognized.")
+    D = np.zeros((n_states, n_states))
 
-    for n in range(300):   # repeat
+    for _ in range(300):   # repeat
 
         for (s, r, ns) in data:
             
@@ -108,19 +100,21 @@ def fit_rep_TD(env, data, mode="SR", alpha=0.03):
     
     return D
 
-
 def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interval=1000, \
             r_shaped_weight=0.5):
     
     assert 0 <= r_shaped_weight <= 1
     Q = np.zeros((env.num_states, env.num_actions))
 
+    R = env.rewards
+    R_orig_max = np.abs(R).max()
+
     timesteps = []
     ret_evals = []
     s = env.reset()
     for n in range(max_iter):
 
-        if np.random.rand() < 0.05:
+        if np.random.rand() < 0.05:     # epsilon greedy
             a = np.random.choice(env.num_actions)
         else:
             a = np.argmax(Q[s['state']])
@@ -129,7 +123,8 @@ def q_learning(env, env_eval, reward_aux, max_iter=10000, alpha=0.3, log_interva
         terminated = d['terminated']
 
         # shaped reward
-        r = r * (1 - r_shaped_weight) + reward_aux[s['state']] * r_shaped_weight
+        # convex combination of normalized orig and shaped rewards
+        r = r / R_orig_max * (1 - r_shaped_weight) + reward_aux[s['state']] * r_shaped_weight
 
         Q[s['state'], a] += alpha * (r + FLAGS.gamma * (1 - int(terminated)) * Q[ns['state']].max()  - Q[s['state'], a])
 
@@ -197,10 +192,6 @@ def SR_aux_reward(env, i=0):
     e = e.T[idx[::-1]]
     e0 = np.real(e[i])  # largest eigenvector
 
-    # plot_value_pred_map(env, e0, contain_goal_value=True)
-    # plt.title("Eigenvctor")
-    # plt.show()
-
     e0 = - np.abs(e0[terminal_idx] - e0)      # shaped reward
     e0 /= np.abs(e0).max()  # normalize
 
@@ -221,21 +212,10 @@ def DR_MER_aux_reward(env, i=0):
     e = e.T[idx[::-1]]
     e0 = np.real(e[i])      # get i-th eigenvector
 
-    # n_4 = (np.diag(DR) == env.num_actions).astype(int).sum()
-    # if n_4 == 1:
-    #     n_4 = 0
-    # e0 = np.real(e[n_4])
-
     if (e0 < 0).astype(int).sum() > (e0 > 0).astype(int).sum():
         e0 *= -1
 
-    # plot_value_pred_map(env, e0, contain_goal_value=True)
-    # plt.title("Eigenvctor")
-    # plt.show()
-
     # handle #6 careful interpolate after log
-    # e0 = np.abs(e0[terminal_idx] - e0)      # shaped reward
-    # print(e0)
     directions =np.array([
         [1, 0],
         [0, 1],
@@ -299,7 +279,6 @@ def main(argv):
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
     
-
     if FLAGS.representation == 'SR':
         reward_shaped, M = SR_aux_reward(env, i=FLAGS.i_eigen)
     elif FLAGS.representation == "DR":
@@ -309,26 +288,17 @@ def main(argv):
     else:
         raise ValueError()
     
-    # plot_value_pred_map(env, reward_shaped, contain_goal_value=True)
-    # plt.show()
-    # quit()
-
-    
     if FLAGS.r_shaped_weight == 0: # equivalent to no reward shaping..
         quit()
 
-
-    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=50, \
+    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=10, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
     
-    # plt.plot(t, performance)
-    # plt.show()
-    # quit()
     
     exp_name = [FLAGS.representation, FLAGS.n_episodes, FLAGS.i_eigen, FLAGS.r_shaped_weight, FLAGS.lr, FLAGS.seed]
     exp_name = [str(x) for x in exp_name]
     exp_name = '-'.join(exp_name) + ".pkl"
-    path = join("minigrid_basics", "experiments", "reward_shaping_fit_MER_init_0", env.unwrapped.spec.id,)
+    path = join("minigrid_basics", "experiments", "reward_shaping_fit", env.unwrapped.spec.id,)
     os.makedirs(path, exist_ok=True)
 
     data_dict = dict(

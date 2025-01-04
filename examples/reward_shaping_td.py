@@ -30,15 +30,11 @@ flags.DEFINE_multi_string(
     'Gin bindings to override default parameter values '
     '(e.g. "MonMiniGridEnv.stochasticity=0.1").')
 
-flags.DEFINE_boolean('plot', False, 'When True, plot results of experiments. When False, run the experiment.')
-
-
 ### experiment flags
 flags.DEFINE_string('representation', 'SR', 'The representation to use for reward shaping.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 
 # learning representation related
-# flags.DEFINE_float('rep_learn_lr', 0.1, 'Learning rate for learning representations using TD.')
 flags.DEFINE_integer('rep_learn_n_episodes', 100, 'Number of episodes to use for learning representations.')
 
 # reward shaping related
