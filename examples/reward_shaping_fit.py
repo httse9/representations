@@ -291,7 +291,7 @@ def main(argv):
     if FLAGS.r_shaped_weight == 0: # equivalent to no reward shaping..
         quit()
 
-    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=10, \
+    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=20000, log_interval=10, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
     
     

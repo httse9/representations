@@ -118,7 +118,7 @@ def plot_3d(env, v):
 
     x, y = value_map.shape
     x, y = np.meshgrid(range(x), range(y))
-    ax.plot_surface(x, y, value_map, cmap=cm.rainbow, linewidth=0, antialiased=False)
+    ax.plot_surface(x, y, value_map, cmap=cm.rainbow, linewidth=0.2, antialiased=False, edgecolors='k')
     # ax.title.set_text("SR")
 
     ax.set_zlim(-1, 0)

@@ -233,7 +233,7 @@ def main(argv):
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
 
-    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=50000, log_interval=10, \
+    Q, t, performance = q_learning(env, env_eval, reward_shaped, max_iter=20000, log_interval=10, \
             alpha=FLAGS.lr, r_shaped_weight=FLAGS.r_shaped_weight)
     
 
