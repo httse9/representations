@@ -14,7 +14,7 @@ import random
 from matplotlib import cm
 
 from minigrid_basics.custom_wrappers import maxent_mdp_wrapper
-from minigrid_basics.envs import maxent_mon_minigrid
+from minigrid_basics.reward_envs import maxent_mon_minigrid
 from minigrid_basics.examples.rep_utils import construct_value_pred_map
 from minigrid_basics.examples.rep_utils import *
 
@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('env', 'maxent_fourrooms_2', 'Environment to run.')
+flags.DEFINE_string('env', 'fourrooms_2', 'Environment to run.')
 flags.DEFINE_float('gamma', 0.99, 'Discount factor to use for SR.')
 flags.DEFINE_multi_string(
     'gin_bindings', [],
@@ -35,6 +35,7 @@ flags.DEFINE_string('representation', 'baseline', 'The representation to use for
 flags.DEFINE_integer('i_eigen', 0, 'Which eigenvector to use. 0: top eigenvector')
 flags.DEFINE_float('r_shaped_weight', 0.5, 'Learning rate for Q-Learning.')
 flags.DEFINE_float('lr', 0.3, 'Learning rate for Q-Learning.')
+flags.DEFINE_float('lamb', 1., 'Hyperparameter for KL divergence/entropy.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 
 
@@ -119,7 +120,8 @@ def SR_aux_reward(env, i=0):
     # terminal_idx = np.where(~env.nonterminal_idx)[0][0]
     terminal_idx = env.terminal_idx[0]
 
-    SR = compute_SR(env)
+    # print(FLAGS.gamma)
+    SR = compute_SR(env, gamma=FLAGS.gamma)
     if not np.allclose(SR, SR.T):   # handle assymetry, avoid imaginary numbers
         SR = (SR + SR.T) / 2
 
@@ -129,8 +131,41 @@ def SR_aux_reward(env, i=0):
     e = e.T[idx[::-1]]
     e0 = np.real(e[i])  # largest eigenvector
 
+    e0 *= -1
+    plot_value_pred_map(env, -np.log(e0), contain_goal_value=True)
+    plt.show()
+
+    # print(lamb)
+
+    # print(e0)
+    # plt.subplot(1, 3, 1)
+    # plot_value_pred_map(env, e0, contain_goal_value=True)
+    # plt.show()
+
+    # x = 0#-2
+    # diff = (SR[x] - SR[x + 1])
+    # plt.subplot(1, 3, 2)
+    # plot_value_pred_map(env, diff, contain_goal_value=True)
+
+    # plt.subplot(1, 3, 3)
+    # plot_value_pred_map(env, e0* diff * 100, contain_goal_value=True)
+
+    # print(diff @ e0 )
+
+    # plt.show()
+
+
+    # plot_value_pred_map(env, e0, contain_goal_value=True)
+    # plt.show()
+    # quit()
+
     e0 = - np.abs(e0[terminal_idx] - e0)      # shaped reward
+    # print(e0)
     e0 /= np.abs(e0).max()  # normalize
+
+    plot_value_pred_map(env, e0, contain_goal_value=True)
+    plt.show()
+    # quit()
 
     return e0
 
@@ -138,20 +173,45 @@ def DR_MER_aux_reward(env, i=0, mode="MER"):
     # terminal_idx = np.where(~env.nonterminal_idx)[0][0]
     terminal_idx = env.terminal_idx[0]
     if mode == "MER":
-        DR = compute_MER(env)
+        DR = compute_MER(env, lamb=FLAGS.lamb)
     else:
-        DR = compute_DR(env)
+        DR = compute_DR(env, lamb=FLAGS.lamb)
 
     if not np.allclose(DR, DR.T): # handle asymmetry
         DR = (DR + DR.T) / 2
+
+    # DR = np.log(DR)
+
+    plt.imshow(DR)
+    plt.show()
+
+    
+
+    # print(np.max(np.diag(DR)))
 
     lamb, e = np.linalg.eig(DR)
     idx = lamb.argsort()
     e = e.T[idx[::-1]]
     e0 = np.real(e[i])      # get i-th eigenvector
 
-    if (e0 < 0).astype(int).sum() > len(e0) / 2:
-        e0 *= -1
+    # print(lamb)
+
+    # if (e0 < 0).astype(int).sum() > len(e0) / 2:
+    #     e0 *= -1
+
+    # if e0[0] < 0:
+    #     e0 *= -1
+
+    # e0 /= e0.max() - e0.min()
+
+    # sign = (e0 >= 0).astype(int) - (e0 < 0).astype(int)
+
+    plot_value_pred_map(env, np.log(e0), contain_goal_value=True)
+    # plot_value_pred_map(env, np.log(e0), contain_goal_value=True)
+    plt.show()
+
+    if (e0 < 0).any():
+        raise ValueError()
 
     # handle #6 careful interpolate after log
     directions =np.array([
@@ -189,6 +249,10 @@ def DR_MER_aux_reward(env, i=0, mode="MER"):
     if np.abs(e0).max() > 0:
         e0 /= np.abs(e0).max()  # normalize
 
+    plot_value_pred_map(env, e0, contain_goal_value=True)
+    plt.show()
+    # quit()
+
     return e0
 
 def main(argv):
@@ -211,6 +275,15 @@ def main(argv):
 
     env_eval = gym.make(env_id, seed=FLAGS.seed)
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
+
+
+    # SR_aux_reward(env, i=FLAGS.i_eigen)
+
+    # DR = compute_DR(env)
+    DR_MER_aux_reward(env, i=FLAGS.i_eigen, mode="MER")
+
+    
+    quit()
 
     if FLAGS.representation in ["SR", "DR", "MER"]:
         # equivalent to no reward shaping..

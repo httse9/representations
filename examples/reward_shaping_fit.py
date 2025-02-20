@@ -214,6 +214,7 @@ def DR_MER_aux_reward(env, i=0):
 
     if (e0 < 0).astype(int).sum() > (e0 > 0).astype(int).sum():
         e0 *= -1
+    
 
     # handle #6 careful interpolate after log
     directions =np.array([

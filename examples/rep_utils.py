@@ -20,7 +20,7 @@ def compute_SR(env, gamma=0.99):
     SR = np.linalg.inv(np.eye(n_states) - gamma * P_pi)
     return SR
 
-def compute_DR(env):
+def compute_DR(env, lamb=1):
     """
     Compute DR.
     Assume uniform random default policy
@@ -33,10 +33,10 @@ def compute_DR(env):
     pi = np.ones((n_states, n_actions)) / n_actions
 
     P_pi = (P * pi[..., None]).sum(1)
-    DR = np.linalg.inv(np.diag(np.exp(-R)) - P_pi)
+    DR = np.linalg.inv(np.diag(np.exp(-R / lamb)) - P_pi)
     return DR
 
-def compute_MER(env):
+def compute_MER(env, lamb = 1):
     """
     Compute MER
     """
@@ -47,7 +47,7 @@ def compute_MER(env):
     pi = np.ones((n_states, n_actions)) / n_actions
 
     P_pi = (P * pi[..., None]).sum(1)
-    MER = np.linalg.inv(np.diag(np.exp(-R)) / n_actions - P_pi)
+    MER = np.linalg.inv(np.diag(np.exp(-R / lamb)) / n_actions - P_pi)
     return MER
 
 def get_representation(env, rep_name, gamma=0.99, eigen=False):
@@ -164,7 +164,7 @@ def construct_value_pred_map(env, value_prediction, contain_goal_value=False):
         prediction of goal values. If False, 
     """
     state_num = 0
-    value_pred_map = np.zeros(env.reward_grid.shape) - float('-inf')
+    value_pred_map = np.zeros(env.reward_grid.T.shape) - float('-inf')
 
     for i in range(env.height):
         for j in range(env.width):
