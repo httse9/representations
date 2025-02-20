@@ -19,18 +19,19 @@ def set_random_seed(seed):
     random.seed(seed)
 
 def get_lambd(env_name):
-    envs = [
-        'dayan', 'dayan_2',
-        'fourrooms', 'fourrooms_2',
-        'gridroom', 'gridroom_2',
-        'gridmaze', 'gridmaze_2'
-    ]
-    lambds = [
-        1, 1, 1, 1, 1, 1.1, 1.1, 1.3
-    ]
+    return 1.3
+    # envs = [
+    #     'dayan', 'dayan_2',
+    #     'fourrooms', 'fourrooms_2',
+    #     'gridroom', 'gridroom_2',
+    #     'gridmaze', 'gridmaze_2'
+    # ]
+    # lambds = [
+    #     1, 1, 1, 1, 1, 1.1, 1.1, 1.3
+    # ]
 
-    idx = envs.index(env_name)
-    return lambds[idx]
+    # idx = envs.index(env_name)
+    # return lambds[idx]
 
 def create_aux_reward(env, env_name, mode):
     # create reward shaper

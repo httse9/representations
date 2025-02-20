@@ -38,20 +38,19 @@ class Visualizer:
             for j in range(w):
                 if grid[i, j] == '*':
                     # wall
-                    image[i, j] *= 0.3  # gray
+                    image[i, j] = np.array((44, 62, 80)) / 255.  # gray
 
                 elif grid[i, j] == 'l':
                     # lava
-                    image[i, j, 1] = 0.2
-                    image[i, j, 2] = 0  # orange
+                    image[i, j] = np.array((231, 76, 60)) / 255.    # orange
 
                 elif grid[i, j] == 's':
                     # agent
-                    image[i, j, :] = 0 # black
+                    image[i, j] = np.array((41, 128, 185)) / 255.   # blue
 
                 elif grid[i, j] == 'g':
                     # goal
-                    image[i, j, [0, 2]] = 0 # green
+                    image[i, j] = np.array((46, 204, 113)) / 255. # green
 
         plt.imshow(image)
         plt.axis('off')
@@ -91,7 +90,7 @@ class Visualizer:
         for i in range(h):
             for j in range(w):
                 if grid[i, j] == '*':
-                    image[i, j, :3] = 0.3
+                    image[i, j, :3] = np.array((44, 62, 80)) / 255.
         
 
         plt.imshow(image)

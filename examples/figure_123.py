@@ -90,14 +90,16 @@ if __name__ == "__main__":
     ]
     reward_envs = [env + "_2" for env in envs]
 
-    lambds = [
-        1, 1, 1, 1.1, 1, 1, 1.1, 1.3
-    ]
+    # lambds = [
+    #     1, 1, 1, 1.1, 1, 1, 1.1, 1.3
+    # ]
+
+    lambds = [1.3] * 8
 
     # run below separately
     # figure_1(envs + reward_envs)
 
-    # figure_2(envs + reward_envs, lambds)
+    figure_2(envs + reward_envs, lambds)
 
-    figure_3(envs)
+    # figure_3(envs)
 
