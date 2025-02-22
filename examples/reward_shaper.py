@@ -159,10 +159,9 @@ class RewardShaper:
         # compute shaping reward
         shaping_reward = - np.abs(e - e[terminal_idx])
 
-        # normalize so that mean of reward diff of neighboring states is 1.
-        shaping_reward /= np.mean(self.compute_neighboring_diff(shaping_reward))
-
-        assert np.isclose(np.mean(self.compute_neighboring_diff(shaping_reward)), 1.0)
+        # # normalize so that mean of reward diff of neighboring states is 1.
+        # shaping_reward /= np.mean(self.compute_neighboring_diff(shaping_reward))
+        # assert np.isclose(np.mean(self.compute_neighboring_diff(shaping_reward)), 1.0)
 
         return shaping_reward
     
@@ -246,9 +245,9 @@ if __name__ == "__main__":
         plt.suptitle(env_name)
         plt.tight_layout()
 
-        plt.savefig(f"minigrid_basics/plots/where_log_DR/{env_name}.png", dpi=300)
-        plt.clf()
-        # plt.show()
+        # plt.savefig(f"minigrid_basics/plots/where_log_DR/{env_name}.png", dpi=300)
+        # plt.clf()
+        plt.show()
 
 # 1.0 for all
 # grid room 2 1.1

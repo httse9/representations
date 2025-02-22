@@ -11,6 +11,9 @@ from minigrid_basics.examples.reward_shaper import RewardShaper
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+from minigrid_basics.examples.rep_utils import *
+
+
 class AuxiliaryReward:
     """
     """
@@ -29,13 +32,12 @@ class AuxiliaryReward:
         self.r_aux = r_aux
         self.mode = mode
 
-        if mode == "wang":
-            # Because of the square, magnitude of shaped reward can become quite large
-            # Normalize such that auxiliary part has mean magnitude of 1.0
-            wang_normalizer = np.square(r_aux - r_aux[env.terminal_idx[0]]).mean()
-            self.r_aux = r_aux / np.sqrt(wang_normalizer)
-
-            assert np.isclose(np.square(self.r_aux - self.r_aux[env.terminal_idx[0]]).mean(), 1.0)
+        # if mode == "wang":
+        #     # Because of the square, magnitude of shaped reward can become quite large
+        #     # Normalize such that auxiliary part has mean magnitude of 1.0
+        #     wang_normalizer = np.square(r_aux - r_aux[env.terminal_idx[0]]).mean()
+        #     self.r_aux = r_aux / np.sqrt(wang_normalizer)
+        #     assert np.isclose(np.square(self.r_aux - self.r_aux[env.terminal_idx[0]]).mean(), 1.0)
 
     def shaped_reward(self, r_orig, state, next_state):
         """
@@ -174,7 +176,9 @@ class QLearner:
             if (n + 1) % log_interval == 0:
                 timesteps.append(n + 1)
                 returns.append(self.eval_policy())
-                Qs.append(self.Q.copy())
+
+                if (n + 1) % 1000 == 0:
+                    Qs.append(self.Q.copy())
 
         return np.array(timesteps), np.array(returns), np.array(Qs)
 
@@ -212,14 +216,20 @@ if __name__ == "__main__":
     aux_reward = AuxiliaryReward(env, reward_SR, "wang")
     qlearner = QLearner(env, env_eval, aux_reward, 1.0)
 
-    t, ret = qlearner.learn(100000, 10000)
-    plt.plot(t, ret, label="SR wang")
-    # plt.ylim([-200, None])
+    plot_value_pred_map(env, aux_reward.r_aux, contain_goal_value=True)
     plt.show()
+
+    # t, ret = qlearner.learn(100000, 10000)
+    # plt.plot(t, ret, label="SR wang")
+    # plt.ylim([-200, None])
+    # plt.show()
 
     # ### test reward shaping SR potential
     aux_reward = AuxiliaryReward(env, reward_SR, "potential")
     qlearner = QLearner(env, env_eval, aux_reward, 1.0)
+
+    plot_value_pred_map(env, aux_reward.r_aux, contain_goal_value=True)
+    plt.show()
 
     # t, ret = qlearner.learn(100000, 10000)
     # plt.plot(t, ret, label="SR potential")
@@ -227,10 +237,13 @@ if __name__ == "__main__":
     # plt.show()
 
     # ### test reward shaping DR potential
-    # eigenvec_DR = shaper.DR_top_log_eigenvector(lambd=1.3)
-    # reward_DR = shaper.shaping_reward_transform_using_terminal_state(eigenvec_DR)
-    # aux_reward = AuxiliaryReward(env, reward_DR, "potential")
-    # qlearner = QLearner(env, env_eval, aux_reward, 0.1)
+    eigenvec_DR = shaper.DR_top_log_eigenvector(lambd=1.3)
+    reward_DR = shaper.shaping_reward_transform_using_terminal_state(eigenvec_DR)
+    aux_reward = AuxiliaryReward(env, reward_DR, "potential")
+    qlearner = QLearner(env, env_eval, aux_reward, 0.1)
+
+    plot_value_pred_map(env, aux_reward.r_aux, contain_goal_value=True)
+    plt.show()
 
     # t, ret = qlearner.learn(10000, 100)
     # plt.plot(t, ret, label = "DR potential")
