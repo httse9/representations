@@ -92,6 +92,7 @@ class RewardShaper:
 
         # normalize
         e0 /= np.sqrt(e0 @ e0)
+        assert np.isclose(e0 @ e0, 1.0)
 
         return e0
 
@@ -142,6 +143,7 @@ class RewardShaper:
 
         log_e0 = np.log(e0)
         log_e0 /= np.sqrt(log_e0 @ log_e0)
+        assert np.isclose(log_e0 @ log_e0, 1.0)
 
         return log_e0
     
@@ -215,7 +217,6 @@ if __name__ == "__main__":
 
         # SR top eigenvector
         eigenvector_SR = shaper.SR_top_eigenvector()
-        print(eigenvector_SR @ eigenvector_SR)
         plt.subplot(2, 2, 1)
         plot_value_pred_map(env, eigenvector_SR, contain_goal_value=True)
         plt.ylabel("EV of SR")
@@ -229,7 +230,6 @@ if __name__ == "__main__":
 
         # DR log top eigenvector
         log_eigenvector_DR = shaper.DR_top_log_eigenvector(lambd=lambd)
-        print(log_eigenvector_DR @ log_eigenvector_DR)
         plt.subplot(2, 2, 3)
         plot_value_pred_map(env, log_eigenvector_DR, contain_goal_value=True)
         plt.ylabel("Log EV of DR")
