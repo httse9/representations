@@ -90,6 +90,9 @@ class RewardShaper:
         e = e.T[idx[::-1]]
         e0 = np.real(e[0]) 
 
+        # normalize
+        e0 /= np.sqrt(e0 @ e0)
+
         return e0
 
     
@@ -137,7 +140,10 @@ class RewardShaper:
             e0 *= -1
         assert (e0 > 0).all()
 
-        return np.log(e0)
+        log_e0 = np.log(e0)
+        log_e0 /= np.sqrt(log_e0 @ log_e0)
+
+        return log_e0
     
     def shaping_reward_transform_using_terminal_state(self, e):
         """
@@ -153,6 +159,8 @@ class RewardShaper:
 
         # normalize so that mean of reward diff of neighboring states is 1.
         shaping_reward /= np.mean(self.compute_neighboring_diff(shaping_reward))
+
+        assert np.isclose(np.mean(self.compute_neighboring_diff(shaping_reward)), 1.0)
 
         return shaping_reward
     
@@ -207,6 +215,7 @@ if __name__ == "__main__":
 
         # SR top eigenvector
         eigenvector_SR = shaper.SR_top_eigenvector()
+        print(eigenvector_SR @ eigenvector_SR)
         plt.subplot(2, 2, 1)
         plot_value_pred_map(env, eigenvector_SR, contain_goal_value=True)
         plt.ylabel("EV of SR")
@@ -220,6 +229,7 @@ if __name__ == "__main__":
 
         # DR log top eigenvector
         log_eigenvector_DR = shaper.DR_top_log_eigenvector(lambd=lambd)
+        print(log_eigenvector_DR @ log_eigenvector_DR)
         plt.subplot(2, 2, 3)
         plot_value_pred_map(env, log_eigenvector_DR, contain_goal_value=True)
         plt.ylabel("Log EV of DR")

@@ -92,7 +92,7 @@ if __name__ == "__main__":
     env = maxent_mdp_wrapper.MDPWrapper(env)
 
     # separate environment for evaluation
-    env_eval = gym.make(env_id, seed=args.seed)
+    env_eval = gym.make(env_id, )
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
 
     # create auxiliary reward
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     qlearner = QLearner(env, env_eval, aux_reward, args.step_size)
 
     # learn
-    t, ret = qlearner.learn(args.max_iter, args.log_interval)
+    t, ret, Qs = qlearner.learn(args.max_iter, args.log_interval)
     # plt.plot(t, ret, label=args.mode)
     # plt.show()
 
@@ -113,7 +113,8 @@ if __name__ == "__main__":
 
     data = dict(
         t = t,
-        ret = ret
+        ret = ret,
+        Qs=Qs
     )
 
     with open(os.path.join(path, filename), "wb") as f:
