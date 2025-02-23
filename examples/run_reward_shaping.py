@@ -33,31 +33,34 @@ def get_lambd(env_name):
     # idx = envs.index(env_name)
     # return lambds[idx]
 
-def create_aux_reward(env, env_name, mode):
+def create_aux_reward(env, env_name, mode, r_aux_weight):
     # create reward shaper
     shaper = RewardShaper(env)
 
     if mode == "none":
         # no reward shaping
-        aux_reward = AuxiliaryReward(env, None, "none")
+        aux_reward = AuxiliaryReward(env, None, "none", 0)
 
     elif mode == "SR_wang":
         # SR reward shaping in prev work
+        assert 0 < r_aux_weight <= 1
         eigvec_SR = shaper.SR_top_eigenvector()
         reward_SR = shaper.shaping_reward_transform_using_terminal_state(eigvec_SR)
-        aux_reward = AuxiliaryReward(env, reward_SR, "wang")
+        aux_reward = AuxiliaryReward(env, reward_SR, "wang", r_aux_weight)
 
     elif mode == "SR_potential":
         # SR for potential based reward shaping
+        assert 0 < r_aux_weight <= 1
         eigvec_SR = shaper.SR_top_eigenvector()
         reward_SR = shaper.shaping_reward_transform_using_terminal_state(eigvec_SR)
-        aux_reward = AuxiliaryReward(env, reward_SR, "potential")
+        aux_reward = AuxiliaryReward(env, reward_SR, "potential", r_aux_weight)
 
     elif mode == "DR_potential":
         # DR for potential based reward shaping
+        assert 0 < r_aux_weight <= 1
         eigvec_DR = shaper.DR_top_log_eigenvector(lambd=get_lambd(env_name))
         reward_DR = shaper.shaping_reward_transform_using_terminal_state(eigvec_DR)
-        aux_reward = AuxiliaryReward(env, reward_DR, "potential")
+        aux_reward = AuxiliaryReward(env, reward_DR, "potential", r_aux_weight)
 
     else:
         raise ValueError(f"Mode '{mode}' not recognized.")
@@ -71,6 +74,7 @@ if __name__ == "__main__":
 
     # reward shaping related
     parser.add_argument("--mode", default="none", help="Mode of reward shaping. CHoose from [none, SR_wang, SR_potential, DR_potential]")
+    parser.add_argument("--r_aux_weight", default=0., type=float, help="Weight for convex combination of original reward and auxiliary reward.")
 
     # Q Learning related
     parser.add_argument("--step_size", default=0.1, type=float, help="Step size")
@@ -96,7 +100,7 @@ if __name__ == "__main__":
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
 
     # create auxiliary reward
-    aux_reward = create_aux_reward(env, args.env, args.mode)
+    aux_reward = create_aux_reward(env, args.env, args.mode, args.r_aux_weight)
 
     # create QLearner
     qlearner = QLearner(env, env_eval, aux_reward, args.step_size)
@@ -109,7 +113,7 @@ if __name__ == "__main__":
     # save result
     path = os.path.join("minigrid_basics", "experiments", "reward_shaping", args.env, args.mode, )
     os.makedirs(path, exist_ok=True)
-    filename = f"{args.step_size}-{args.seed}.pkl"
+    filename = f"{args.r_aux_weight}-{args.step_size}-{args.seed}.pkl"
 
     data = dict(
         t = t,

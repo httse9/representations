@@ -18,12 +18,13 @@ class AuxiliaryReward:
     """
     """
 
-    def __init__(self, env, r_aux, mode, gamma=0.99):
+    def __init__(self, env, r_aux, mode, r_aux_weight, gamma=0.99):
         """
         env: environment
         gamma: discount factor
         r_aux: auxiliary reward
         mode: potential, wang or none
+        r_aux_weight: weight put on auxiliary reward
 
         Try not to modify r_aux...
         """
@@ -31,13 +32,15 @@ class AuxiliaryReward:
         self.gamma = gamma
         self.r_aux = r_aux
         self.mode = mode
+        assert 0 <= r_aux_weight <= 1
+        self.r_aux_weight = r_aux_weight
 
-        # if mode == "wang":
-        #     # Because of the square, magnitude of shaped reward can become quite large
-        #     # Normalize such that auxiliary part has mean magnitude of 1.0
-        #     wang_normalizer = np.square(r_aux - r_aux[env.terminal_idx[0]]).mean()
-        #     self.r_aux = r_aux / np.sqrt(wang_normalizer)
-        #     assert np.isclose(np.square(self.r_aux - self.r_aux[env.terminal_idx[0]]).mean(), 1.0)
+        if mode == "wang":
+            # Because of the square, magnitude of shaped reward can become quite large
+            # Normalize such that auxiliary part has mean magnitude of 1.0
+            wang_normalizer = np.square(r_aux - r_aux[env.terminal_idx[0]]).mean()
+            self.r_aux = r_aux / np.sqrt(wang_normalizer)
+            assert np.isclose(np.square(self.r_aux - self.r_aux[env.terminal_idx[0]]).mean(), 1.0)
 
     def shaped_reward(self, r_orig, state, next_state):
         """
@@ -60,7 +63,7 @@ class AuxiliaryReward:
         # get idx of terminal state
         terminal_idx = self.env.terminal_idx[0]
 
-        return r_orig - np.square(self.r_aux[terminal_idx] - self.r_aux[next_state])
+        return (1 - self.r_aux_weight) * r_orig - self.r_aux_weight * np.square(self.r_aux[terminal_idx] - self.r_aux[next_state])
 
     def potential_shaped_reward(self, r_orig, state, next_state):
         """
@@ -72,7 +75,7 @@ class AuxiliaryReward:
         next state: scalar, the next state
         """
         # average of r_orig and potential reward of r_aux
-        return r_orig + self.gamma * self.r_aux[next_state] - self.r_aux[state]
+        return (1 - self.r_aux_weight) * r_orig + self.r_aux_weight * (self.gamma * self.r_aux[next_state] - self.r_aux[state])
 
 
 class QLearner:

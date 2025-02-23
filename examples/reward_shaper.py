@@ -159,9 +159,9 @@ class RewardShaper:
         # compute shaping reward
         shaping_reward = - np.abs(e - e[terminal_idx])
 
-        # # normalize so that mean of reward diff of neighboring states is 1.
-        # shaping_reward /= np.mean(self.compute_neighboring_diff(shaping_reward))
-        # assert np.isclose(np.mean(self.compute_neighboring_diff(shaping_reward)), 1.0)
+        # normalize so that mean of reward diff of neighboring states is 1.
+        shaping_reward /= np.mean(self.compute_neighboring_diff(shaping_reward))
+        assert np.isclose(np.mean(self.compute_neighboring_diff(shaping_reward)), 1.0)
 
         return shaping_reward
     
