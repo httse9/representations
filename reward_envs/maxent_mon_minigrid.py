@@ -111,7 +111,7 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
                mission='Reach the goal',
                max_steps=100, see_through_walls=True, seed=1337,
                agent_view_size=7, stochasticity=0.0, episodic=True,
-               reward_dict=None):
+               reward_dict=None, no_goal=False):
     """Constructor for MonMinigrid.
 
     The specifics of the environment are specified through gin files, and
@@ -141,8 +141,15 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
     self._agent_default_pos = agent_pos
     self._goal_default_pos = goal_pos
     self._mission = mission
+
+    # 
+    self.no_goal = no_goal
+
     self._build_raw_grid()
+
+    # 
     self.raw_grid = self._raw_grid  # for easy access..
+    
     
     self.reward_dict = reward_dict
     self._build_reward_grid()
@@ -161,6 +168,14 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
     self._raw_grid = parse_ascii_grid(self._ascii_grid)
     self.width = self._raw_grid.shape[0]
     self.height = self._raw_grid.shape[1]
+
+    # new: eliminate any goals for ROD cycle
+    if self.no_goal:
+      for x in range(self.width):
+        for y in range(self.height):
+          if self._raw_grid[x, y] == 'g':
+            self._raw_grid[x, y] = ' '
+
     # If a start position has been specified, add it to grid.
     if self._agent_default_pos is not None:
       assert len(self._agent_default_pos) == 2

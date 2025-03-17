@@ -22,12 +22,12 @@ class Confidence_Z:
 
 class Plotter:
 
-    def __init__(self ):
+    def __init__(self, fontsize=12):
         """
         self.index: used to control which color
         """
         # set all font size to 10
-        plt.rc('font', size=10)
+        plt.rc('font', size=fontsize)
         self.axis_linewdith = 2
         self.conf_int_alpha = 0.2
 

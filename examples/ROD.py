@@ -166,7 +166,7 @@ def main(argv):
     if FLAGS.show_graphs:
       create_dir(f'minigrid_basics/ROD/simulation_{simulation}')
 
-    total_timesteps = 0
+    total_timesteps = 0   # keep track of time needed to visit all states
 
     i = 0
     
@@ -175,27 +175,32 @@ def main(argv):
       s = env.pos_to_state[env.agent_pos[0] + env.agent_pos[1] * env.width]
       state_image_dict[s] = obs
       state_visits[s] += 1
+
       j = 1
       if np.min(state_visits) < 1:
         total_timesteps += 1
+
+      # TODO: improve environment loop?
+      # in class, instance variable keep tracking of current option
+
       while j < FLAGS.n_steps:
-        if (np.random.random() > 1 - FLAGS.p_option) and (len(options) > 0):
-          option = np.random.choice(options)
-          while option['termination'][s] == 0:
-            if j >= FLAGS.n_steps:
+        if (np.random.random() > 1 - FLAGS.p_option) and (len(options) > 0):  # why not smaller than p_option...?
+          option = np.random.choice(options)    # choose random option
+          while option['termination'][s] == 0:    # termiantion condition? 0 for not terminate, 1 for terminate
+            if j >= FLAGS.n_steps:    # break if episode ends
                 break
-            a = int(option['policy'][s])
+            a = int(option['policy'][s])    # get action outputted by option policy
             obs, reward, done, _ = env.step(a)
             sp = env.pos_to_state[env.agent_pos[0] + env.agent_pos[1] * env.width]
             state_image_dict[sp] = obs
             state_visits[sp] += 1
-            dataset.append((s, a, reward, sp))
+            dataset.append((s, a, reward, sp))    # collect data
             s = sp 
             j = j + 1
             if np.min(state_visits) < 1:
               total_timesteps += 1
         else:
-          a = np.random.choice(4)
+          a = np.random.choice(4)   # uniform exploration
           obs, reward, done, _ = env.step(a)
           sp = env.pos_to_state[env.agent_pos[0] + env.agent_pos[1] * env.width]
           state_image_dict[sp] = obs
@@ -210,7 +215,9 @@ def main(argv):
         env.render_state_visits(obs, state_visits, f'minigrid_basics/ROD/simulation_{simulation}/state_visits_{i}.png')
 
       print(f'Calculating SR {i}')
-      SR = get_SR(env, closed=False, dataset=dataset[-100:], prev_SR=SR, gamma=FLAGS.gamma, step_size=FLAGS.step_size)
+      # compute SR from collected dataset, start from previous SR iteration
+      # how about terminal states? How do the cycle handle that?
+      SR = get_SR(env, closed=False, dataset=dataset[-100:], prev_SR=SR, gamma=FLAGS.gamma, step_size=FLAGS.step_size)    
       
       #SR = get_SR(env)
 
@@ -228,7 +235,7 @@ def main(argv):
       
       idx = np.argsort(eigenvalues)[-1]
       
-      if np.sum(eigenvectors[:, idx]) >= 0:
+      if np.sum(eigenvectors[:, idx]) >= 0:   # -1 flip trick
         eigenvectors[:, idx] = eigenvectors[:, idx] * -1
       
       print(f'Generating option {i}')
@@ -236,20 +243,22 @@ def main(argv):
       if FLAGS.show_graphs:
         graph_values(obs, eigenvectors[:,idx], f'minigrid_basics/ROD/simulation_{simulation}/eigenvector_{i}.png', env)
 
+      # intrinsic reward
       r = get_eigenpurpose(eigenvectors[:,idx])
 
+      ### compute eigenoption   --------------
       is_q, v = get_value(env, r, FLAGS.tolerance, FLAGS.gamma_options, FLAGS.step_size_options, True, dataset)
       option = {'instantiation': set(), 
                 'policy': np.ones(env.num_states) * 5, 
                 'termination': np.ones(env.num_states)}
       
       for s in range(env.num_states):
-        if is_q:
+        if is_q:  # if learned Q wrt eigenpurpose
           if max(v[s, :]) > 0:
             option['instantiation'].add(s)
             option['policy'][s] = np.argmax(v[s, :])
             option['termination'][s] = 0
-        else:
+        else:   # if only learn state value
           max_val = 0
           for a in range(env.num_actions):
             q = np.dot(r[s, :], env.transition_probs[s, a, :]) + FLAGS.gamma * np.dot(env.transition_probs[s, a, :], v)
@@ -259,6 +268,7 @@ def main(argv):
               option['policy'][s] = a
               option['termination'][s] = 0
       options.append(option)
+      ### end compute eigenoption ------------------
 
       if FLAGS.show_graphs:
         env.render_option_policy(env.reset(), option, f'minigrid_basics/ROD/simulation_{simulation}/option_policy_{i}.png')
@@ -267,7 +277,7 @@ def main(argv):
     if FLAGS.show_graphs:
       env.render_state_visits(env.reset(), (state_visits/np.sum(state_visits))*100, f'minigrid_basic/ROD/simulation_{simulation}/diffusion.png')
 
-    total_state_visits = total_state_visits + state_visits
+    total_state_visits = total_state_visits + state_visits    # total state visits across many ROD simulations
     
     timestep_list.append(total_timesteps)
 

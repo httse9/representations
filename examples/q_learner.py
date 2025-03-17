@@ -203,7 +203,7 @@ if __name__ == "__main__":
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
 
     ### test no reward shaping (good, it learns)
-    aux_reward = AuxiliaryReward(env, None, "none")
+    aux_reward = AuxiliaryReward(env, None, "none", 0)
     qlearner = QLearner(env, env_eval, aux_reward, 0.1)
 
     # t, ret = qlearner.learn(10000, 100)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     shaper = RewardShaper(env)
     eigvec_SR = shaper.SR_top_eigenvector()
     reward_SR = shaper.shaping_reward_transform_using_terminal_state(eigvec_SR)
-    aux_reward = AuxiliaryReward(env, reward_SR, "wang")
+    aux_reward = AuxiliaryReward(env, reward_SR, "wang", 0)
     qlearner = QLearner(env, env_eval, aux_reward, 1.0)
 
     plot_value_pred_map(env, aux_reward.r_aux, contain_goal_value=True)

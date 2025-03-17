@@ -13,6 +13,12 @@ from minigrid_basics.examples.reward_shaper import RewardShaper
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+action_markers = {
+    0: '>',
+    1: 'v',
+    2: '<',
+    3: '^'
+}
 
 
 class Visualizer:
@@ -56,14 +62,19 @@ class Visualizer:
         plt.axis('off')
 
 
-    def visualize_shaping_reward_2d(self, reward):
+    def visualize_shaping_reward_2d(self, reward, ax=None):
+
+        if ax is None:
+            ax = plt.gca()
+
         grid = self.env.raw_grid.T
         h, w = grid.shape
         image = np.ones((h, w))
 
         # normalize reward
         reward_normalized = reward - reward.min()
-        reward_normalized /= reward_normalized.max()
+        if not (reward_normalized == 0).all():
+            reward_normalized /= reward_normalized.max()
         assert (reward_normalized >= 0).all() and (reward_normalized <= 1).all()
 
         # construct the map with reward
@@ -93,8 +104,46 @@ class Visualizer:
                     image[i, j, :3] = np.array((44, 62, 80)) / 255.
         
 
-        plt.imshow(image)
-        plt.axis('off')
+        ax.imshow(image)
+        ax.axis('off')
+        plt.tight_layout()
+
+    def visualize_option(self, option, ax=None):
+
+        marker_size = 9.5
+
+        if ax is None:
+            ax = plt.gca()
+
+        grid = self.env.raw_grid.T
+        h, w = grid.shape
+        image = np.ones((h, w, 3))
+
+        # draw walls
+        for i in range(h):
+            for j in range(w):
+                if grid[i, j] == '*':
+                    # wall
+                    image[i, j, :3] = np.array((44, 62, 80)) / 255.
+
+
+        ax.imshow(image)
+
+        for s, a, in enumerate(option['policy']):
+
+            x, y = self.env.state_to_pos[s]
+
+            # if termination, plot terminate sign
+            if option['termination'][s]:
+                ax.plot([x], [y], marker='o', markersize=marker_size, color='#c0392b')
+                continue
+
+            # if not termination set, plot action
+            ax.plot([x ], [y ], marker=action_markers[a], markersize=marker_size, color="#1abc9c")
+            
+        ax.axis('off')
+        plt.tight_layout()
+        
 
 
 
