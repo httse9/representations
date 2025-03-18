@@ -65,7 +65,7 @@ if __name__ == "__main__":
     n_iterations = {
         "dayan": 50,
         "dayan_2": 50,
-        "fourrooms": 10,        ### !!! TODO: change back to 50
+        "fourrooms": 50,      
         "fourrooms_2": 50,
         "gridroom": 120,
         "gridroom_2": 120,
