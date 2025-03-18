@@ -9,7 +9,6 @@ import matplotlib as mpl
 import gin
 from minigrid_basics.reward_envs import maxent_mon_minigrid
 from minigrid_basics.custom_wrappers import maxent_mdp_wrapper
-from minigrid_basics.examples.reward_shaper import RewardShaper
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -151,7 +150,7 @@ class Visualizer:
 
 ### testing
 if __name__ == "__main__":
-
+    from minigrid_basics.examples.reward_shaper import RewardShaper
     env_name = "gridroom_2"
 
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))

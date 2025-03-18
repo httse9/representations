@@ -26,14 +26,10 @@ class RODCycle_DR(RODCycle):
             representation_step_size=representation_step_size, gamma=gamma, num_options=num_options, eigenoption_step_size=eigenoption_step_size,
             plot=plot)
         
-        # lambda for the DR
-        self.lambd = lambd
-
+        self.lambd = lambd # lambda for the DR
         self.plot_path = "minigrid_basics/DR_ROD"
         
         self.reset()
-
-        # TODO: include lambda in DR TD learning. Lambda use 1.3?
         
 
     def reset(self):
@@ -48,7 +44,11 @@ class RODCycle_DR(RODCycle):
         """
         DR TD learning
         """
-        dataset = list(islice(self.dataset, len(self.dataset) - self.dataset_size, len(self.dataset)))
+        if self.dataset_size is not None:
+            dataset = self.dataset[-self.dataset_size:]
+        else:
+            dataset = self.dataset
+
         for _ in range(self.learn_rep_iteration):
             for (s, a, r, ns) in dataset:
 
@@ -84,20 +84,13 @@ class RODCycle_DR(RODCycle):
             e0 *= -1
         assert (e0[e0 != 0] > 0).all()
 
-        # print(e0)
         log_e0 = np.where(e0 > 0, np.log(e0), e0)       # apply log only on positive entries
-
-        # print("1", log_e0)
 
         if (log_e0 != 0).any():
             log_e0 /= np.sqrt(log_e0 @ log_e0)
         else:
             log_e0 += 1 / np.sqrt(self.env.num_states)
         assert np.isclose(log_e0 @ log_e0, 1.0)
-
-        # print("2", log_e0)
-
-        # log_e0 *= -1
 
         return log_e0
     
@@ -123,7 +116,7 @@ After flipping, algorithm encourages to go to them.
 if __name__ == "__main__":
     
 
-    env_name = "fourrooms_2"
+    env_name = "gridroom_2"
 
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
@@ -144,7 +137,9 @@ if __name__ == "__main__":
     os.chdir("minigrid_basics/DR_ROD")
     # for prefix in ['option', 'cumulative_visit', 'eigenvector']:
     subprocess.call([
-        'ffmpeg', '-framerate', '8', '-i', f'iteration%d.png', '-r', '30','-pix_fmt', 'yuv420p', '-y', f'ROD_{env_name}.mp4'
+        'ffmpeg', '-framerate', '8', '-i', f'iteration%d.png', '-r', '30','-pix_fmt', 'yuv420p', 
+        '-vf', "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+        '-y', f'ROD_{env_name}.mp4'
     ])
 
     for file_name in  glob.glob("*.png"):

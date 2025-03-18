@@ -30,7 +30,7 @@ class RODCycle:
         self.p_option = p_option       # probability of selecting an option
 
         # learn representation
-        self.dataset_size = dataset_size      # maximum transitions stored, default None, meaning keep all transitions
+        self.dataset_size = dataset_size      # number of latest transitions used; default None, meaning keep all transitions
         self.learn_rep_iteration = learn_rep_iteration
         self.representation_step_size = representation_step_size
         self.gamma = gamma
@@ -57,7 +57,7 @@ class RODCycle:
 
         # dataset
         # self.dataset = deque(maxlen=self.dataset_size)   # dataset of transitions for learning representation
-        self.dataset = deque()
+        self.dataset = []
 
         # useful statistics to keep track of
         self.cumulative_reward = [0]       # cumulative reward obtained so far
@@ -128,7 +128,11 @@ class RODCycle:
         """
         Update SR
         """
-        dataset = list(islice(self.dataset, len(self.dataset) - self.dataset_size, len(self.dataset)))
+        if self.dataset_size is not None:
+            dataset = self.dataset[-self.dataset_size:]
+        else:
+            dataset = self.dataset
+
         for _ in range(self.learn_rep_iteration):        
             for (s, a, r, ns) in dataset:
 
@@ -259,9 +263,9 @@ class RODCycle:
 
             print(f"State Visit %: {self.state_visit_percentage[-1]:.2f}")
 
-            # terminate if visited all states
-            if self.state_visit_percentage[-1] == 1.:
-                break
+            # # terminate if visited all states
+            # if self.state_visit_percentage[-1] == 1.:
+            #     break
 
 
         print("-----------------------")
@@ -289,27 +293,25 @@ if __name__ == "__main__":
     env = gym.make(env_id, seed=42, no_goal=True)
     env = maxent_mdp_wrapper.MDPWrapper(env, )
 
-    rodc = RODCycle(env, learn_rep_iteration=1, num_options=1, epresentation_step_size=0.05, dataset_size=100)
+    rodc = RODCycle(env, learn_rep_iteration=10)
 
-    rewards, visit_percentage = rodc.rod_cycle(n_iterations=100)
+    rewards, visit_percentage = rodc.rod_cycle(n_iterations=10)
 
     for i in range(1, len(rewards)):
         rewards[i] += rewards[i - 1]
 
     # save video
     os.chdir("minigrid_basics/SR_ROD")
-    # for prefix in ['option', 'cumulative_visit', 'eigenvector']:
     subprocess.call([
-        'ffmpeg', '-framerate', '8', '-i', f'iteration%d.png', '-r', '30','-pix_fmt', 'yuv420p', '-y', f'ROD_{env_name}.mp4'
+        'ffmpeg', '-framerate', '8', '-i', f'iteration%d.png', '-r', '30','-pix_fmt', 'yuv420p', 
+        '-vf', "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+        '-y', f'ROD_{env_name}.mp4'
     ])
 
     for file_name in  glob.glob("*.png"):
         os.remove(file_name)
 
-    """
-    Make mp4 videos side by side: 
-    ffmpeg -i cumulative_visit.mp4 -i eigenvector.mp4 -i option.mp4 -filter_complex "[0:v][1:v][2:v]hstack=inputs=3[v]" -map "[v]" output.mp4
-    """
+
 
     # plt.plot(rewards)
     # plt.show()
