@@ -47,8 +47,8 @@ def get_args():
     return parser.parse_args()
 
 def set_random_seed(seed):
-    random.seed(seed)  # Python's built-in random module
-    np.random.seed(seed)  # NumPy
+    random.seed(seed)  
+    np.random.seed(seed)  
 
 def create_env(env_name, seed):
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
