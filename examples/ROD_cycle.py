@@ -134,7 +134,7 @@ class RODCycle:
             dataset = self.dataset
 
         for _ in range(self.learn_rep_iteration):        
-            for (s, a, r, ns) in reversed(dataset):
+            for (s, a, r, ns) in dataset:
 
                 indicator = np.zeros((self.env.num_states))
                 indicator[s] = 1
