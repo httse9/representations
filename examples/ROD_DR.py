@@ -143,10 +143,10 @@ if __name__ == "__main__":
     env = gym.make(env_id, seed=42, no_goal=True)
     env = maxent_mdp_wrapper.MDPWrapper(env, )
 
-    # rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.05, dataset_size=100)
+    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.05, dataset_size=100)
     
     # trying to find settings where it fails, and the I can use my fix to fix it.
-    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.01, dataset_size=100)
+    # rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.01, dataset_size=100)
 
     rewards, visit_percentage = rodc.rod_cycle(n_iterations=100)
 
