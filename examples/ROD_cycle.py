@@ -30,7 +30,7 @@ class RODCycle:
         self.p_option = p_option       # probability of selecting an option
 
         # learn representation
-        self.dataset_size = dataset_size      # number of latest transitions used; default None, meaning keep all transitions
+        self.dataset_size = max(dataset_size, n_steps)      # number of latest transitions used; default None, meaning keep all transitions
         self.learn_rep_iteration = learn_rep_iteration
         self.representation_step_size = representation_step_size
         self.gamma = gamma
@@ -134,7 +134,7 @@ class RODCycle:
             dataset = self.dataset
 
         for _ in range(self.learn_rep_iteration):        
-            for (s, a, r, ns) in reversed(dataset):
+            for (s, a, r, ns) in dataset:
 
                 indicator = np.zeros((self.env.num_states))
                 indicator[s] = 1

@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import matplotlib.pyplot as plt
 import subprocess
 import glob
+import pickle
 
 
 class RODCycle_DR(RODCycle):
@@ -49,8 +50,15 @@ class RODCycle_DR(RODCycle):
         else:
             dataset = self.dataset
 
-        for _ in range(self.learn_rep_iteration):
-            for (s, a, r, ns) in reversed(dataset):
+        # do one backward pass through dataset for theoretical guarantee
+        for (s, a, r, ns) in reversed(dataset):
+                indicator = np.zeros((self.env.num_states))
+                indicator[s] = 1
+                self.representation[s] += self.representation_step_size * (np.exp(r / self.lambd) * (indicator + self.representation[ns]) - self.representation[s])
+
+        # remaining iterations, do forward pass
+        for _ in range(self.learn_rep_iteration - 1):
+            for (s, a, r, ns) in dataset:
 
                 indicator = np.zeros((self.env.num_states))
                 indicator[s] = 1
@@ -63,29 +71,37 @@ class RODCycle_DR(RODCycle):
         Return loged eigenvector
         """
         DR = (self.representation + self.representation.T) / 2
+        num_unvisited_states = (DR.sum(1) == 1.).astype(int).sum()
 
         DR = arb_mat(DR.tolist())
         lamb, e = DR.eig(right=True, algorithm="approx", )
         lamb = np.array(lamb).astype(np.clongdouble).real.flatten()
         e = np.array(e.tolist()).astype(np.clongdouble).real.astype(np.float32)
 
-        # filter out eigenvalue 1
-        e = e.T[lamb != 1.]
-        lamb = lamb[lamb != 1.]
-
-        idx = np.flip(lamb.argsort())
+        idx = np.argsort(lamb)
         lamb = lamb[idx]
-        e = e[idx]
-        e0 = e[0]
+        e = e.T[idx]
+
+        # tentative top eigenvector
+        e0 = e.T[-num_unvisited_states-1]
+
+        # handle edge case
+        if not ((e0 <= 0).all() or (e0 >= 0).all()):
+            # search from eigenvalues 1
+            for v in reversed(e):
+                if ((v <= 0).all() or (v >= 0).all()) and (v != 0).astype(int).sum() > 1:
+                    e0 = v
+                    break
 
         # assert entries are positive before taking log
         # Note: there may exist 0 entries due to unvisited states
         if e0.sum() < 0:
             e0 *= -1
-        assert (e0[e0 != 0] > 0).all()
+        assert (e0 >= 0).all()
 
         log_e0 = np.where(e0 > 0, np.log(e0), e0)       # apply log only on positive entries
 
+        # normalize
         if (log_e0 != 0).any():
             log_e0 /= np.sqrt(log_e0 @ log_e0)
         else:
