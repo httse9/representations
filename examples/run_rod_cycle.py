@@ -81,10 +81,6 @@ if __name__ == "__main__":
     save_state_visit = args.pop("save_state_visit")
     representation = args.pop("representation")
 
-    # ### increase episode length for gridroom
-    # if "gridroom" in env_name or "gridmaze" in env_name:
-    #     args["n_steps"] = 200
-
 
     args['env'] = create_env(env_name, seed)
     set_random_seed(seed)
