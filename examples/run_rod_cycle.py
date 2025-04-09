@@ -39,6 +39,8 @@ def get_args():
     # plotting
     parser.add_argument("--plot", action="store_true", help="Whether to plot results (True/False)")
 
+    parser.add_argument("--save_state_visit", action="store_true")
+
     # seed
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
 
@@ -76,7 +78,13 @@ if __name__ == "__main__":
     args = vars(get_args())
     env_name = args.pop("env")
     seed = args.pop("seed")
+    save_state_visit = args.pop("save_state_visit")
     representation = args.pop("representation")
+
+    # ### increase episode length for gridroom
+    # if "gridroom" in env_name or "gridmaze" in env_name:
+    #     args["n_steps"] = 200
+
 
     args['env'] = create_env(env_name, seed)
     set_random_seed(seed)
@@ -90,13 +98,6 @@ if __name__ == "__main__":
 
     rewards, visit_percentage = rod_cycle.rod_cycle(n_iterations=n_iterations[env_name])
 
-    # import matplotlib.pyplot as plt
-    # plt.plot(rewards)
-    # plt.show()
-
-    # plt.plot(visit_percentage)
-    # plt.show()
-
     ### save results
     path = join("minigrid_basics", "experiments", "rod", env_name, representation)
     os.makedirs(path, exist_ok=True)
@@ -105,10 +106,17 @@ if __name__ == "__main__":
     values = [str(args[key]) for key in keys]
     filename = '-'.join(values) + f"-{seed}.pkl"
 
-    data_dict = dict(
-        rewards=rewards,
-        visit_percentage=visit_percentage
-    )
+    if save_state_visit:
+        data_dict = dict(
+            all_iteration_state_visits=rod_cycle.all_iteration_state_visits,
+            rewards=rewards,
+            visit_percentage=visit_percentage
+        )
+    else:
+        data_dict = dict(
+            rewards=rewards,
+            visit_percentage=visit_percentage
+        )
 
     with open(join(path, filename), "wb") as f:
         pickle.dump(data_dict, f)
