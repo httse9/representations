@@ -52,9 +52,9 @@ class RODCycle_DR(RODCycle):
 
         # do one backward pass through dataset for theoretical guarantee
         for (s, a, r, ns) in reversed(dataset):
-                indicator = np.zeros((self.env.num_states))
-                indicator[s] = 1
-                self.representation[s] += self.representation_step_size * (np.exp(r / self.lambd) * (indicator + self.representation[ns]) - self.representation[s])
+            indicator = np.zeros((self.env.num_states))
+            indicator[s] = 1
+            self.representation[s] += self.representation_step_size * (np.exp(r / self.lambd) * (indicator + self.representation[ns]) - self.representation[s])
 
         # remaining iterations, do forward pass
         for _ in range(self.learn_rep_iteration - 1):
@@ -138,15 +138,15 @@ if __name__ == "__main__":
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
 
-    np.random.seed(42)
+    np.random.seed(0)
 
     env = gym.make(env_id, seed=42, no_goal=True)
     env = maxent_mdp_wrapper.MDPWrapper(env, )
 
-    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.05, dataset_size=100)
+    # rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.05, dataset_size=100)
     
     # trying to find settings where it fails, and the I can use my fix to fix it.
-    # rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.01, dataset_size=100)
+    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.01, dataset_size=100)
 
     rewards, visit_percentage = rodc.rod_cycle(n_iterations=100)
 
