@@ -17,6 +17,7 @@ import subprocess
 import glob
 
 
+
 class RODCycle:
 
     def __init__(self, env, n_steps=100, p_option=0.05, dataset_size=None, learn_rep_iteration=10, representation_step_size=0.1,
@@ -30,7 +31,7 @@ class RODCycle:
         self.p_option = p_option       # probability of selecting an option
 
         # learn representation
-        self.dataset_size = dataset_size      # number of latest transitions used; default None, meaning keep all transitions
+        self.dataset_size = max(dataset_size, n_steps)      # number of latest transitions used; default None, meaning keep all transitions
         self.learn_rep_iteration = learn_rep_iteration
         self.representation_step_size = representation_step_size
         self.gamma = gamma

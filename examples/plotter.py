@@ -104,7 +104,7 @@ class Plotter:
         ax.spines["left"].set_linewidth(self.axis_linewdith)
         ax.spines["bottom"].set_linewidth(self.axis_linewdith)
 
-    def axis_setting(self, ax, xlim_low=0, xlim_high=None, ylim_low=None, ylim_high=None):
+    def axis_setting(self, ax, xlim_low=None, xlim_high=None, ylim_low=None, ylim_high=None):
         ax.set_xlim([xlim_low, xlim_high])
         ax.set_ylim([ylim_low, ylim_high])
 
