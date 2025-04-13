@@ -45,10 +45,10 @@ def figure_2(envs, lambds):
         shaper = RewardShaper(env)
 
         eigvec_DR = shaper.DR_top_log_eigenvector(lambd=lambd)
-        reward_DR = shaper.shaping_reward_transform_using_terminal_state(eigvec_DR)
+        # reward_DR = shaper.shaping_reward_transform_using_terminal_state(eigvec_DR)
 
         plt.subplot(2, 4, i + 1)
-        visualizer.visualize_shaping_reward_2d(reward_DR)
+        visualizer.visualize_shaping_reward_2d(eigvec_DR)
 
     plt.tight_layout()
     plt.savefig("minigrid_basics/plots/Figure_2.png", dpi=300)
@@ -70,10 +70,13 @@ def figure_3(envs):
         shaper = RewardShaper(env)
 
         eigvec_SR = shaper.SR_top_eigenvector()
-        reward_SR = shaper.shaping_reward_transform_using_terminal_state(eigvec_SR)
+        # reward_SR = shaper.shaping_reward_transform_using_terminal_state(eigvec_SR)
+
+        if eigvec_SR.sum() > 0:
+            eigvec_SR *= -1
 
         plt.subplot(1, 4, i + 1)
-        visualizer.visualize_shaping_reward_2d(reward_SR)
+        visualizer.visualize_shaping_reward_2d(eigvec_SR)
 
     plt.tight_layout()
     plt.savefig("minigrid_basics/plots/Figure_3.png", dpi=300)
@@ -97,9 +100,9 @@ if __name__ == "__main__":
     lambds = [1.3] * 8
 
     # run below separately
-    # figure_1(envs + reward_envs)
+    figure_1(envs + reward_envs)
 
-    figure_2(envs + reward_envs, lambds)
+    # figure_2(envs + reward_envs, lambds)
 
     # figure_3(envs)
 

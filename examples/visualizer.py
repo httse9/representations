@@ -94,8 +94,8 @@ class Visualizer:
                 state_num += 1
 
         # use plt cmap to get colored image
-        # cmap = plt.get_cmap('rainbow')
-        cmap = plt.get_cmap('Reds')
+        cmap = plt.get_cmap('rainbow')
+        # cmap = plt.get_cmap('Reds')
         norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
         scalar_map = cm.ScalarMappable(norm=norm, cmap=cmap)
         image = scalar_map.to_rgba(image)
