@@ -61,7 +61,7 @@ class Visualizer:
         plt.axis('off')
 
 
-    def visualize_shaping_reward_2d(self, reward, ax=None):
+    def visualize_shaping_reward_2d(self, reward, ax=None, normalize=True, vmin=0, vmax=1):
 
         if ax is None:
             ax = plt.gca()
@@ -71,10 +71,13 @@ class Visualizer:
         image = np.ones((h, w))
 
         # normalize reward
-        reward_normalized = reward - reward.min()
-        if not (reward_normalized == 0).all():
-            reward_normalized /= reward_normalized.max()
-        assert (reward_normalized >= 0).all() and (reward_normalized <= 1).all()
+        if normalize:
+            reward_normalized = reward - reward.min()
+            if not (reward_normalized == 0).all():
+                reward_normalized /= reward_normalized.max()
+            assert (reward_normalized >= 0).all() and (reward_normalized <= 1).all()
+        else:
+            reward_normalized = reward
 
         # construct the map with reward
         # let walls have value 0 for now
@@ -91,8 +94,9 @@ class Visualizer:
                 state_num += 1
 
         # use plt cmap to get colored image
-        cmap = plt.get_cmap('rainbow')
-        norm = mpl.colors.Normalize(vmin=0, vmax=1)
+        # cmap = plt.get_cmap('rainbow')
+        cmap = plt.get_cmap('Reds')
+        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
         scalar_map = cm.ScalarMappable(norm=norm, cmap=cmap)
         image = scalar_map.to_rgba(image)
 

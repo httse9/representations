@@ -72,105 +72,142 @@ if __name__ == "__main__":
         "Modified Grid Room",
         "Modified Grid Maze", 
     ]
-    env_labels = [x for x in env_labels for _ in range(2)]
+    
 
     
 
-    # # read random walk data
-    # for env_name in envs:
-    #     path = join(rod_directory, env_name)
+    # read random walk data
+    def random_walk_data(env_name):
+        path = join(rod_directory, env_name)
         
-    #     rw_r = []
-    #     rw_p = []
-    #     for s in range(1, 11):
-    #         with open(join(path, f"random_walk_{s}.pkl"), "rb") as f:
-    #             data = pickle.load(f)
-    #             rw_r.append(data['rewards'])
-    #             rw_p.append(data['visit_percentage'])
+        rw_r = []
+        rw_p = []
+        for s in range(1, 11):
+            with open(join(path, f"random_walk_{s}.pkl"), "rb") as f:
+                data = pickle.load(f)
+                rw_r.append(data['rewards'])
+                rw_p.append(data['visit_percentage'])
 
-    #      = np.array(rw_p)
-    #     = np.array(rw_r)
+        return np.array(rw_p), np.array(rw_r)
 
     plotter = Plotter()
 
-    ### Figure 3
-
-    fig, axs = plt.subplots(2, 4, figsize=(21, 8))
-    axs = axs.T.flatten()
-    for env_name, env_label, ax, SR_hyper, DR_hyper in zip(envs, env_labels, axs, SR_best_hyperparameters, DR_best_hyperparameters):
+    ### Figure 3 (state visitation for envs with no low reward region)
+    idx = ["2" not in e for e in envs]
+    envs_fig_3 = [x for x, m in zip(envs, idx) if m]
+    SR_best = [x for x, m in zip(SR_best_hyperparameters, idx) if m]
+    DR_best = [x for x, m in zip(DR_best_hyperparameters, idx) if m]
+    fig, axs = plt.subplots(1, 4, figsize=(15, 3))
+    axs = axs.flatten()
+    for env_name, env_label, ax, SR_hyper, DR_hyper in zip(envs_fig_3, env_labels, axs, SR_best, DR_best):
 
         _, r_sr, p_sr = read_data(env_name, "SR", *SR_hyper)
         _, r_dr, p_dr = read_data(env_name, "DR", *DR_hyper)
+        p_rw, r_rw = random_walk_data(env_name)
 
         plotter.index = 0
         x = np.array(range(p_sr.shape[1])) * 1.0
         x /= 1000
         plotter.plot_data(ax, x, p_sr, conf_level=0.95, plot_conf_int=False, plot_all_seeds=True)
 
+        plotter.index = 2
+        plotter.plot_data(ax, x, p_rw, plot_conf_int=False, plot_all_seeds=True)
+
         plotter.index = 1
         plotter.plot_data(ax, x, p_dr, plot_conf_int=False, plot_all_seeds=True)
 
-        if "2" in env_name:
-            x_label = "Thousand Steps"
-            title = None
-        else:
-            x_label = None
-            title = env_label
         if "dayan" in  env_name:
             y_label = "State Visit Percentage"
+            plotter.index = 0
+            plotter.draw_text(ax, 0.05, 0.95, "SR")
+            plotter.index = 1
+            plotter.draw_text(ax, 3, 0.9, "DR")
+            plotter.index = 2
+            plotter.draw_text(ax, 1.2, 0.8, "RW")
         else:
             y_label = None
 
-        if env_name == "dayan":
-            ax.annotate("Without Low-Reward Region", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
-                xycoords=ax.yaxis.label, textcoords='offset points',
-                size='large', ha='right', va='center', rotation=90)
             
-        elif env_name == "dayan_2":
-            ax.annotate("With Low-Reward Region", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
-                xycoords=ax.yaxis.label, textcoords='offset points',
-                size='large', ha='right', va='center', rotation=90)
-        
 
-        plotter.finalize_plot(ax, title=title, xlabel=x_label, ylabel=y_label, axis_setting=(None, None, 0, None))
+        plotter.finalize_plot(ax, title=env_label, xlabel="Thousand Steps", ylabel=y_label, axis_setting=(None, None, 0, None))
 
     plt.savefig(f"minigrid_basics/plots/rod_Figure_3.png", dpi=300)
     plt.close()
 
-    ### Figure 3
+    ### Figure 4
 
-    fig, axs = plt.subplots(1, 4, figsize=(21, 4))
-    axs = axs.T.flatten()
+    fig, axs = plt.subplots(2, 4, figsize=(15, 6))
+    axs = axs.T
     idx = ["2" in e for e in envs]
     envs = [x for x, m in zip(envs, idx) if m]
-    env_labels =[x for x, m in zip(env_labels, idx) if m]
+    # env_labels = [x for x in env_labels for _ in range(2)]
     SR_best_hyperparameters = [x for x, m in zip(SR_best_hyperparameters, idx) if m]
     DR_best_hyperparameters = [x for x, m in zip(DR_best_hyperparameters, idx) if m]
 
     for env_name, env_label, ax, SR_hyper, DR_hyper in zip(envs, env_labels, axs, SR_best_hyperparameters, DR_best_hyperparameters):
         
+        
         _, r_sr, p_sr = read_data(env_name, "SR", *SR_hyper)
         _, r_dr, p_dr = read_data(env_name, "DR", *DR_hyper)
+        p_rw, r_rw = random_walk_data(env_name)
 
         r_sr = np.cumsum(r_sr, axis=1)
         r_dr = np.cumsum(r_dr, axis=1)
+        r_rw = np.cumsum(r_rw, axis=1)
 
+        # plot visitation top row
+        plotter.index = 0
+        x = np.array(range(p_sr.shape[1])) * 1.0
+        x /= 1000
+        plotter.plot_data(ax[0], x, p_sr, conf_level=0.95, plot_conf_int=False, plot_all_seeds=True)
+
+        plotter.index = 2
+        plotter.plot_data(ax[0], x, p_rw, plot_conf_int=False, plot_all_seeds=True)
+
+        plotter.index = 1
+        plotter.plot_data(ax[0], x, p_dr, plot_conf_int=False, plot_all_seeds=True)
+
+        
+
+        if "dayan" in  env_name:
+            plotter.index = 0
+            plotter.draw_text(ax[0], 0.05, 0.95, "SR")
+            plotter.index = 1
+            plotter.draw_text(ax[0], 3, 0.9, "DR")
+            plotter.index = 2
+            plotter.draw_text(ax[0], 1.2, 0.8, "RW")
+
+
+        y_label = "State Visit Percentage" if "dayan" in env_name else None
+
+        plotter.finalize_plot(ax[0], title=env_label, xlabel=None, ylabel=y_label,)
+
+
+        # plot cumulative reward bottom row
         plotter.index = 0
         x = np.array(range(r_sr.shape[1])) * 1.0
         x /= 1000
-        plotter.plot_data(ax, x, r_sr, conf_level=0.95, plot_conf_int=False, plot_all_seeds=True)
+        plotter.plot_data(ax[1], x, r_sr / 1000, conf_level=0.95, plot_conf_int=False, plot_all_seeds=True)
+
+        plotter.index = 2
+        plotter.plot_data(ax[1], x, r_rw / 1000, plot_conf_int=False, plot_all_seeds=True)
 
         plotter.index = 1
-        plotter.plot_data(ax, x, r_dr, plot_conf_int=False, plot_all_seeds=True)
+        plotter.plot_data(ax[1], x, r_dr / 1000, plot_conf_int=False, plot_all_seeds=True)
 
-    
-        if "dayan" in  env_name:
-            y_label = "Cumulative Rewards"
-        else:
-            y_label = None
         
 
-        plotter.finalize_plot(ax, title=env_label, xlabel="Thousand Steps", ylabel=y_label, )
+
+        # y ticks
+        min_return = min(r_sr.min(), r_dr.min(), r_rw.min()) / 1000
+        min_return = int(np.ceil(min_return))
+        interval = 5
+        tick_positions = range(0, min_return - 1, min_return // interval)
+        ax[1].set_yticks(tick_positions)
+
+        y_label = "Cumulative Rewards (Thousand)" if "dayan" in env_name else None
+
+        plotter.finalize_plot(ax[1], title=None, xlabel="Thousand Steps", ylabel=y_label)
 
     plt.savefig(f"minigrid_basics/plots/rod_Figure_4.png", dpi=300)
 

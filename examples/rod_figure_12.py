@@ -143,6 +143,7 @@ if __name__ == "__main__":
     reward_envs = [e for e in envs if "2" in e]
 
     for env_name, env_label, ax in zip(reward_envs, env_labels, axs):
+        best_p, best_r = [], []
         for j, rep in enumerate(representation):
             plotter.index = j
 
@@ -152,21 +153,29 @@ if __name__ == "__main__":
             ps = [ps[key] for key in keys]
             rs = [rs[key] for key in keys]
 
-            p_auc = [p.mean() for p in ps]
-            r_avg = [r.mean() for r in rs]
+            p_auc = np.array([p.mean() for p in ps])
+            r_avg = np.array([r.mean() for r in rs])
 
             # plot data
             c = Colors.colors[j]
-            ax.scatter(p_auc, r_avg, color=c, marker="o")
+            ax.scatter(p_auc, r_avg, color=c, marker="o", alpha=0.1)
 
-            ax.axvline(np.max(p_auc), color=c, linestyle='--', alpha=0.2)
-
+            # record best point
+            best_idx = np.where(p_auc == np.max(p_auc))[0]
+            best_idx = best_idx[np.argmax(r_avg[best_idx])]
+            best_p.append(p_auc[best_idx])
+            best_r.append(r_avg[best_idx])
 
             if "dayan" in env_name:
                 if rep == "SR":
                     plotter.draw_text(ax, 0.93, -3.1, rep)
                 elif rep == "DR":
                     plotter.draw_text(ax, 0.9, -2.5, rep)
+
+        for j, (bp, br) in enumerate(zip(best_p, best_r)):
+            c = Colors.colors[j]
+            ax.axvline(np.max(bp), color=c, linestyle='--', alpha=0.2)
+            ax.scatter(bp, br, color=c, marker="o", alpha=1.)
 
         # random walk data
         rw_p = p_dict[env_name]["rw"].mean()
@@ -180,7 +189,7 @@ if __name__ == "__main__":
             y_label = "Average Reward Per Timestep"
         else:
             y_label = None
-        plotter.finalize_plot(ax, title=env_label, xlabel="State Visit Percentage AUC", ylabel=y_label)
+        plotter.finalize_plot(ax, title=env_label, xlabel="Average State Visit Percentage", ylabel=y_label)
         plt.tight_layout()
 
        
@@ -204,6 +213,7 @@ if __name__ == "__main__":
     reward_envs = [e for e in envs if "2" in e]
 
     for env_name, env_label, ax in zip(reward_envs, env_labels, axs):
+        best_p, best_r = [], []
         for j, rep in enumerate(representation):
             plotter.index = j
 
@@ -215,20 +225,28 @@ if __name__ == "__main__":
 
             length = ps[0].shape[1] // 10
 
-            p_auc = [p.mean(0)[-length:].mean() for p in ps]
-            r_avg = [r.mean() for r in rs]
+            p_auc = np.array([p.mean(0)[-length:].mean() for p in ps])
+            r_avg = np.array([r.mean() for r in rs])
 
             # plot data
             c = Colors.colors[j]
-            ax.scatter(p_auc, r_avg, color=c, marker="o")
+            ax.scatter(p_auc, r_avg, color=c, marker="o", alpha=0.1)
 
-            ax.axvline(np.max(p_auc), color=c, linestyle='--', alpha=0.2)
+            # scatter best point with solid color
+            best_idx = np.where(p_auc == np.max(p_auc))[0]
+            best_idx = best_idx[np.argmax(r_avg[best_idx])]
+            best_p.append(p_auc[best_idx])
+            best_r.append(r_avg[best_idx])
 
             if "dayan" in env_name:
                 if rep == "SR":
                     plotter.draw_text(ax, 0.99, -3.1, rep)
                 elif rep == "DR":
                     plotter.draw_text(ax, 0.975, -2.5, rep)
+        for j, (bp, br) in enumerate(zip(best_p, best_r)):
+            c = Colors.colors[j]
+            ax.axvline(np.max(bp), color=c, linestyle='--', alpha=0.2)
+            ax.scatter(bp, br, color=c, marker="o", alpha=1.)
 
         # random walk data
         rw_p = p_dict[env_name]["rw"].mean(0)[-length:].mean()
@@ -242,7 +260,7 @@ if __name__ == "__main__":
             y_label = "Average Reward Per Timestep"
         else:
             y_label = None
-        plotter.finalize_plot(ax, title=env_label, xlabel="State Visit Percentage AUC", ylabel=y_label)
+        plotter.finalize_plot(ax, title=env_label, xlabel="Average State Visit Percentage", ylabel=y_label)
 
 
        
