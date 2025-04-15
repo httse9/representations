@@ -75,6 +75,7 @@ def figure_3(envs):
         if eigvec_SR.sum() > 0:
             eigvec_SR *= -1
 
+
         plt.subplot(1, 4, i + 1)
         visualizer.visualize_shaping_reward_2d(eigvec_SR)
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     lambds = [1.3] * 8
 
     # run below separately
-    # figure_1(envs + reward_envs)
+    figure_1(envs + reward_envs)
 
     # figure_2(envs + reward_envs, lambds)
 
