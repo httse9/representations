@@ -72,6 +72,9 @@ def figure_3(envs):
         eigvec_SR = shaper.SR_top_eigenvector()
         # reward_SR = shaper.shaping_reward_transform_using_terminal_state(eigvec_SR)
 
+        if eigvec_SR.sum() > 0:
+            eigvec_SR *= -1
+
         plt.subplot(1, 4, i + 1)
         visualizer.visualize_shaping_reward_2d(eigvec_SR)
 
@@ -99,7 +102,7 @@ if __name__ == "__main__":
     # run below separately
     # figure_1(envs + reward_envs)
 
-    figure_2(envs + reward_envs, lambds)
+    # figure_2(envs + reward_envs, lambds)
 
-    # figure_3(envs)
+    figure_3(envs)
 
