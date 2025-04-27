@@ -41,4 +41,3 @@ MaxEntMonMiniGridEnv.reward_dict = {
   '*': 1    # walls don't have reward, so set to positive value
 }
 
-# Modified from https://proceedings.mlr.press/v139/wang21ae/wang21ae.pdf
