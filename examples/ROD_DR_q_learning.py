@@ -1,11 +1,10 @@
+from minigrid_basics.examples.ROD_DR import RODCycle_DR
 import os
 import numpy as np
-from minigrid_basics.examples.visualizer import Visualizer
-from os.path import join
-from collections import deque
+from flint import arb_mat, ctx
 from itertools import islice
-from minigrid_basics.examples.ROD_cycle import RODCycle
 
+ctx.dps = 100   # important
 
 # testing imports
 import gym
@@ -17,14 +16,49 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import matplotlib.pyplot as plt
 import subprocess
 import glob
+import pickle
 
-class ROD_SR_Q(RODCycle):
+
+class ROD_DR_Q(RODCycle_DR):
+
     def __init__(self, env, n_steps=100, p_option=0.05, dataset_size=None, learn_rep_iteration=10, representation_step_size=0.1,
-                 gamma=0.99, num_options=None, eigenoption_step_size=0.1, plot=True):
-        super().__init__(env, n_steps, p_option, dataset_size, learn_rep_iteration, representation_step_size, gamma, num_options, eigenoption_step_size, plot)
-
-        # keep track of performance of Q-learning
+                 gamma=0.99, num_options=None, eigenoption_step_size=0.1, lambd=1.3, plot=True):
+        super().__init__(env, n_steps=n_steps, p_option=p_option, dataset_size=dataset_size, learn_rep_iteration=learn_rep_iteration,
+            representation_step_size=representation_step_size, gamma=gamma, num_options=num_options, eigenoption_step_size=eigenoption_step_size,
+            lambd=lambd, plot=plot)
+        
         self.Q_performance = []
+
+    def learn_representation(self):
+        """
+        DR TD learning
+        """
+        if self.dataset_size is not None:
+            dataset = self.dataset[-self.dataset_size:]
+        else:
+            dataset = self.dataset
+
+        # do one backward pass through dataset for theoretical guarantee
+        for (s, a, r, ns) in reversed(dataset):
+
+            if s == self.env.terminal_idx[0]:
+                r = -1
+
+            indicator = np.zeros((self.env.num_states))
+            indicator[s] = 1
+            self.representation[s] += self.representation_step_size * (np.exp(r / self.lambd) * (indicator + self.representation[ns]) - self.representation[s])
+
+        # remaining iterations, do forward pass
+        for _ in range(self.learn_rep_iteration - 1):
+            for (s, a, r, ns) in dataset:
+
+                if s == self.env.terminal_idx[0]:
+                    r = -1
+
+                indicator = np.zeros((self.env.num_states))
+                indicator[s] = 1
+
+                self.representation[s] += self.representation_step_size * (np.exp(r / self.lambd) * (indicator + self.representation[ns]) - self.representation[s])
 
 
     def learn_Q_policy(self,):
@@ -129,21 +163,33 @@ class ROD_SR_Q(RODCycle):
         return self.cumulative_reward, self.state_visit_percentage
 
 
+
+    
+
 if __name__ == "__main__":
     
 
     env_name = "gridroom_2"
+    # env_name = "fourrooms_2"
 
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
 
     np.random.seed(1)
+    # tried smaller rep step size, not reversing dataset
+    # increasing episode length does help.
+    # I think, limiting the use of eigenoption to once in one episode is useful.
+    # what was the problem when using seed 1??
 
-    env = gym.make(env_id, seed=42, no_goal=False)
+    env = gym.make(env_id, seed=42, no_goal=False, max_steps=200)
     env = maxent_mdp_wrapper.MDPWrapper(env, )
 
-    rodc = ROD_SR_Q(env, learn_rep_iteration=10, dataset_size=100, p_option=0.1, eigenoption_step_size=0.1, num_options=1)
 
-    rewards, visit_percentage = rodc.rod_cycle(n_iterations=120)
+    
+    rodc = ROD_DR_Q(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.03, dataset_size=100, p_option=0.1, n_steps=200)
+    # rodc = ROD_DR_Q(env, learn_rep_iteration=10, num_options=1, representation_step_size=0.01, dataset_size=100, p_option=0.1, n_steps=200)
+    
+
+    rewards, visit_percentage = rodc.rod_cycle(n_iterations=100)
 
     print(rodc.Q_performance)
