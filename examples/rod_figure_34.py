@@ -52,14 +52,14 @@ SR_best_hyperparameters = [
 ]
 
 DR_best_hyperparameters = [
-    [0.01, 100, 10, 0.01, 1],
+    [0.05, 100, 10, 0.01, 1],
     [0.05, 100, 1, 0.1, 1],
-    [0.1, 100, 10, 0.03, 1],
-    [0.1, 100, 10, 0.03, 1],
-    [0.05, 100, 1, 0.01, 1],
+    [0.05, 100, 1, 0.1, 1],
+    [0.1, 100, 10, 0.01, 1],
+    [0.1, 100, 1, 0.01, 1],
     [0.1, 100, 1, 0.03, 1],
     [0.1, 100, 1, 0.01, 1],
-    [0.1, 100, 1, 0.03, 1]
+    [0.1, 100, 1, 0.01, 1]
 ]
 
 if __name__ == "__main__":
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     envs_fig_3 = [x for x, m in zip(envs, idx) if m]
     SR_best = [x for x, m in zip(SR_best_hyperparameters, idx) if m]
     DR_best = [x for x, m in zip(DR_best_hyperparameters, idx) if m]
-    fig, axs = plt.subplots(1, 4, figsize=(15, 3))
+    fig, axs = plt.subplots(1, 4, figsize=(13, 2.5))
     axs = axs.flatten()
     for env_name, env_label, ax, SR_hyper, DR_hyper in zip(envs_fig_3, env_labels, axs, SR_best, DR_best):
 
@@ -119,9 +119,9 @@ if __name__ == "__main__":
         if "dayan" in  env_name:
             y_label = "State Visit Percentage"
             plotter.index = 0
-            plotter.draw_text(ax, 0.05, 0.95, "SR")
+            plotter.draw_text(ax, -0.2, 0.95, "CEO")
             plotter.index = 1
-            plotter.draw_text(ax, 3, 0.9, "DR")
+            plotter.draw_text(ax, 3, 0.85, "RACE")
             plotter.index = 2
             plotter.draw_text(ax, 1.2, 0.8, "RW")
         else:
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     ### Figure 4
 
-    fig, axs = plt.subplots(2, 4, figsize=(15, 6))
+    fig, axs = plt.subplots(2, 4, figsize=(13, 5))
     axs = axs.T
     idx = ["2" in e for e in envs]
     envs = [x for x, m in zip(envs, idx) if m]
@@ -171,9 +171,9 @@ if __name__ == "__main__":
 
         if "dayan" in  env_name:
             plotter.index = 0
-            plotter.draw_text(ax[0], 0.05, 0.95, "SR")
+            plotter.draw_text(ax[0], -0.2, 0.95, "CEO")
             plotter.index = 1
-            plotter.draw_text(ax[0], 3, 0.9, "DR")
+            plotter.draw_text(ax[0], 3, 0.9, "RACE")
             plotter.index = 2
             plotter.draw_text(ax[0], 1.2, 0.8, "RW")
 
@@ -205,7 +205,7 @@ if __name__ == "__main__":
         tick_positions = range(0, min_return - 1, min_return // interval)
         ax[1].set_yticks(tick_positions)
 
-        y_label = "Cumulative Rewards (Thousand)" if "dayan" in env_name else None
+        y_label = "Cumulative Rewards (K)" if "dayan" in env_name else None
 
         plotter.finalize_plot(ax[1], title=None, xlabel="Thousand Steps", ylabel=y_label)
 

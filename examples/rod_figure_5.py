@@ -39,6 +39,7 @@ def read_data(env_name, representation, p_option, dataset_size, learn_rep_iterat
             visit.append(data['all_iteration_state_visits'])
             num_successful_seeds += 1
         except:
+            print("Fail", env_name, representation, s)
             pass
 
     return num_successful_seeds, np.array(visit)
@@ -51,13 +52,13 @@ SR_best_hyperparameters = [
     [0.1, 100, 100, 0.01, 1]
 ]
 
-
 DR_best_hyperparameters = [
     [0.05, 100, 1, 0.1, 1],
-    [0.1, 100, 10, 0.03, 1],
+    [0.1, 100, 10, 0.01, 1],
     [0.1, 100, 1, 0.03, 1],
-    [0.1, 100, 1, 0.03, 1]
+    [0.1, 100, 1, 0.01, 1]
 ]
+
 
 
 if __name__ == "__main__":
@@ -90,7 +91,8 @@ if __name__ == "__main__":
         
         # DR visits
         ss, DR_visits = read_data(env_name, "DR", *DR_hyper)
-        DR_visits = DR_visits.sum(1).mean(0)
+        # print(DR_visits.shape)
+        DR_visits = DR_visits[:, :, :].sum(1).mean(0)
 
         SR_visits = np.log(SR_visits)
         DR_visits = np.log(DR_visits)

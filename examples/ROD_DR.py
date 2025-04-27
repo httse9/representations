@@ -18,6 +18,18 @@ import subprocess
 import glob
 import pickle
 
+def power_iteration(A, num_iters=1000, tol=1e-9):
+    b = np.random.rand(A.shape[1])
+    b = b / np.linalg.norm(b)
+
+    for _ in range(num_iters):
+        b_new = A @ b
+        b_new = b_new / np.linalg.norm(b_new)
+        if np.linalg.norm(b_new - b) < tol:
+            break
+        b = b_new
+
+    return b
 
 class RODCycle_DR(RODCycle):
 
@@ -101,11 +113,12 @@ class RODCycle_DR(RODCycle):
         # positive top eigenvector hidden in space spanned by the
         # corresponding eigenvectors
         # if this happens, use power iteration
-        if not ((e0_visited <= 0).all() or (e0_visited >= 0).all()):
+
+        if not ((e0_visited < 0).all() or (e0_visited > 0).all()):
             DR_visited = DR[visited_idx][:, visited_idx]
             e0_visited = power_iteration(DR_visited)
 
-        assert (e0_visited <= 0).all() or (e0_visited >= 0).all()
+        assert (e0_visited < 0).all() or (e0_visited > 0).all()
 
         # project back to full state space
         e0 = np.zeros_like(visited_idx).astype(float)
@@ -125,8 +138,12 @@ class RODCycle_DR(RODCycle):
 
         return log_e0
 
+
+
     def compute_eigenvector_old(self):
         """
+        *** OLD
+        *** Found better way of doing it
         DR eigenvector. Take log
         Return loged eigenvector
         """
@@ -143,7 +160,7 @@ class RODCycle_DR(RODCycle):
         e = e.T[idx]
 
         # tentative top eigenvector
-        e0 = e.T[-num_unvisited_states-1]
+        e0 = e.T[-num_unvisited_states-1]       ## !!! bug
 
         # handle edge case
         if not ((e0 <= 0).all() or (e0 >= 0).all()):
@@ -158,6 +175,13 @@ class RODCycle_DR(RODCycle):
         # Note: there may exist 0 entries due to unvisited states
         if e0.sum() < 0:
             e0 *= -1
+
+        # code for debug
+        # if not (e0 >= 0).all():
+        #     job_id = os.environ.get('SLURM_JOB_ID')
+        #     with open(f"minigrid_basics/fail-{job_id}.pkl", "wb") as f:
+        #         pickle.dump(self.representation, f)
+
         assert (e0 >= 0).all()
 
         log_e0 = np.where(e0 > 0, np.log(e0), e0)       # apply log only on positive entries
@@ -166,6 +190,7 @@ class RODCycle_DR(RODCycle):
         if (log_e0 != 0).any():
             log_e0 /= np.sqrt(log_e0 @ log_e0)
         else:
+            print("ZERO")
             log_e0 += 1 / np.sqrt(self.env.num_states)
         assert np.isclose(log_e0 @ log_e0, 1.0)
 

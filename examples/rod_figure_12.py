@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 from minigrid_basics.examples.plotter import Plotter, Colors
 from itertools import product
 
+plt.rcParams.update({
+'font.size': 12  # set your preferred default size here
+})
+
 rod_directory = join("minigrid_basics", "experiments", "rod")
 
 # build the file name given the hyperparameters
@@ -139,11 +143,11 @@ if __name__ == "__main__":
         keys.append(hypername)
 
 
-    fig, axs = plt.subplots(1, 4, figsize=(12, 3))
+    fig, axs = plt.subplots(1, 4, figsize=(11, 2.5))
     reward_envs = [e for e in envs if "2" in e]
 
     for env_name, env_label, ax in zip(reward_envs, env_labels, axs):
-        best_p, best_r = [], []
+        best_p, best_r = [[], []], [[], []]
         for j, rep in enumerate(representation):
             plotter.index = j
 
@@ -160,17 +164,19 @@ if __name__ == "__main__":
             c = Colors.colors[j]
             ax.scatter(p_auc, r_avg, color=c, marker="o", alpha=0.1)
 
-            # record best point
-            best_idx = np.where(p_auc == np.max(p_auc))[0]
-            best_idx = best_idx[np.argmax(r_avg[best_idx])]
-            best_p.append(p_auc[best_idx])
-            best_r.append(r_avg[best_idx])
+            # record best points
+            k = 1
+            top_idx = np.argpartition(p_auc, -k)[-k:]
+            for idx in top_idx:
+                print(env_name, rep, keys[idx])
+                best_p[j].append(p_auc[idx])
+                best_r[j].append(r_avg[idx])
 
             if "dayan" in env_name:
                 if rep == "SR":
-                    plotter.draw_text(ax, 0.93, -3.1, rep)
+                    plotter.draw_text(ax, 0.92, -3.1, "CEO")
                 elif rep == "DR":
-                    plotter.draw_text(ax, 0.9, -2.5, rep)
+                    plotter.draw_text(ax, 0.88, -2.5, "RACE")
 
         for j, (bp, br) in enumerate(zip(best_p, best_r)):
             c = Colors.colors[j]
@@ -186,7 +192,7 @@ if __name__ == "__main__":
             plotter.draw_text(ax, 0.925, -3.85, "RW")
 
         if "dayan" in env_name:
-            y_label = "Average Reward Per Timestep"
+            y_label = "Average Reward"
         else:
             y_label = None
         plotter.finalize_plot(ax, title=env_label, xlabel="Average State Visit Percentage", ylabel=y_label)
@@ -209,11 +215,11 @@ if __name__ == "__main__":
     
 
 
-    fig, axs = plt.subplots(1, 4, figsize=(12, 3))
+    fig, axs = plt.subplots(1, 4, figsize=(11, 2.5))
     reward_envs = [e for e in envs if "2" in e]
 
     for env_name, env_label, ax in zip(reward_envs, env_labels, axs):
-        best_p, best_r = [], []
+        best_p, best_r = [[], []], [[], []]
         for j, rep in enumerate(representation):
             plotter.index = j
 
@@ -232,17 +238,18 @@ if __name__ == "__main__":
             c = Colors.colors[j]
             ax.scatter(p_auc, r_avg, color=c, marker="o", alpha=0.1)
 
-            # scatter best point with solid color
-            best_idx = np.where(p_auc == np.max(p_auc))[0]
-            best_idx = best_idx[np.argmax(r_avg[best_idx])]
-            best_p.append(p_auc[best_idx])
-            best_r.append(r_avg[best_idx])
+            # record best points
+            k = 1
+            top_idx = np.argpartition(p_auc, -k)[-k:]
+            for idx in top_idx:
+                best_p[j].append(p_auc[idx])
+                best_r[j].append(r_avg[idx])
 
             if "dayan" in env_name:
                 if rep == "SR":
-                    plotter.draw_text(ax, 0.99, -3.1, rep)
+                    plotter.draw_text(ax, 0.985, -3.1, "CEO")
                 elif rep == "DR":
-                    plotter.draw_text(ax, 0.975, -2.5, rep)
+                    plotter.draw_text(ax, 0.975, -2.7, "RACE")
         for j, (bp, br) in enumerate(zip(best_p, best_r)):
             c = Colors.colors[j]
             ax.axvline(np.max(bp), color=c, linestyle='--', alpha=0.2)
@@ -257,7 +264,7 @@ if __name__ == "__main__":
             plotter.draw_text(ax, 0.99, -3.9, "RW")
 
         if "dayan" in env_name:
-            y_label = "Average Reward Per Timestep"
+            y_label = "Average Reward"
         else:
             y_label = None
         plotter.finalize_plot(ax, title=env_label, xlabel="Average State Visit Percentage", ylabel=y_label)

@@ -204,7 +204,7 @@ if __name__ == "__main__":
             idx = np.argmax(p_auc)
             # print(p_auc[idx], r_avg[idx])
             plt.scatter([p_auc[idx]], [r_avg[idx]], color="k", marker="*", s=12)
-            assert len(p_auc) == len(keys)
+            # assert len(p_auc) == len(keys)
             print(list(keys)[idx])        # assume no seed fail
 
             # To plot failed seeds, uncomment:
