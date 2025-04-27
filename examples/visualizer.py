@@ -155,14 +155,9 @@ class Visualizer:
 ### testing
 if __name__ == "__main__":
     from minigrid_basics.examples.reward_shaper import RewardShaper
-    env_name = "gridroom_2"
+    env_name = "gridroom_25"
 
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
-
-
-    env_id = maxent_mon_minigrid.register_environment()
-
-    gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"fourrooms.gin"))
     env_id = maxent_mon_minigrid.register_environment()
 
 
@@ -185,7 +180,7 @@ if __name__ == "__main__":
     visualizer.visualize_shaping_reward_2d(reward_SR)
     plt.show()
 
-    eigenvec_DR = shaper.DR_top_log_eigenvector(lambd=1.1)
+    eigenvec_DR = shaper.DR_top_log_eigenvector(lambd=1.3)
     reward_DR = shaper.shaping_reward_transform_using_terminal_state(eigenvec_DR)
     
     visualizer.visualize_shaping_reward_2d(reward_DR)

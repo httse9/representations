@@ -67,10 +67,10 @@ if __name__ == "__main__":
     ]
 
     labels = [
-        "no shaping",
-        "SR (prior)",
-        "SR (potential)",
-        "DR (potential)"
+        "ns",
+        "SR-pri",
+        "SR-pot",
+        "DR-pot"
     ]
 
     best_setting = {
@@ -136,7 +136,11 @@ if __name__ == "__main__":
         [0, 100000, -1020, 5],
     ]
 
-    fig, axs = plt.subplots(2, 4, figsize=(21, 8))
+    plt.rcParams.update({
+    'font.size': 12  # set your preferred default size here
+    })
+
+    fig, axs = plt.subplots(2, 4, figsize=(13, 5))
     axs = axs.T.flatten()
 
     for env, env_label, axis_setting, ax in zip(envs, env_labels, env_specific_axis_setting, axs):
@@ -153,29 +157,29 @@ if __name__ == "__main__":
             
             if env == "dayan":
                 if mode == "none":
-                    plotter.draw_text(ax, 6000, -80, label)
+                    plotter.draw_text(ax, 6000, -80, label, size=12)
                 elif mode == "SR_wang":
-                    plotter.draw_text(ax, 2100, -60, label)
+                    plotter.draw_text(ax, 1500, -60, label, size=12)
                 elif mode == "SR_potential":
-                    plotter.draw_text(ax, 2000, -15, label)
+                    plotter.draw_text(ax, 500, -20, label, size=12)
                 elif mode == "DR_potential":
-                    plotter.draw_text(ax, 4500, -5, label)
+                    plotter.draw_text(ax, 4500, -5, label, size=12)
 
             plotter.index += 1
 
         if env == "dayan":
             plotter.finalize_plot(ax, ylabel="Return", title=env_label, axis_setting=axis_setting)
 
-            ax.annotate("Without Low-Reward Region", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
+            ax.annotate("Without Lava", xy=(0.1, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
                 xycoords=ax.yaxis.label, textcoords='offset points',
-                size='large', ha='right', va='center', rotation=90)
+                size='medium', ha='right', va='center', rotation=90)
             
         elif env == "dayan_2":
             plotter.finalize_plot(ax, xlabel="Thousand Steps", ylabel="Return", axis_setting=axis_setting)
 
-            ax.annotate("With Low-Reward Region", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
+            ax.annotate("With Lava", xy=(0.1, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
                 xycoords=ax.yaxis.label, textcoords='offset points',
-                size='large', ha='right', va='center', rotation=90)
+                size='medium', ha='right', va='center', rotation=90)
 
         elif "Reward" in  env_label:
             plotter.finalize_plot(ax, xlabel="Thousand Steps", axis_setting=axis_setting)
@@ -183,6 +187,7 @@ if __name__ == "__main__":
             plotter.finalize_plot(ax, title=env_label, axis_setting=axis_setting)
 
 
+        # fig.text(-1, 0.5, 'Low-Reward Region', va='center', rotation='vertical', fontsize=14)
 
         # x tick
         total_timesteps = axis_setting[1]
@@ -199,5 +204,5 @@ if __name__ == "__main__":
         tick_positions = range(0, min_return - 1, min_return // interval)
         ax.set_yticks(tick_positions)
 
-    plt.savefig("minigrid_basics/plots/Figure_4.png", dpi=300)
+    plt.savefig("minigrid_basics/plots/Figure_4.png", dpi=300, bbox_inches='tight')
     # plt.show()

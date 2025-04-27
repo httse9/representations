@@ -93,8 +93,8 @@ class Plotter:
 
 
         # # text label of curve
-    def draw_text(self, ax, x_pos, y_pos, text):
-        ax.text(x_pos, y_pos, text, color=Colors.colors[self.index])
+    def draw_text(self, ax, x_pos, y_pos, text, size=None):
+        ax.text(x_pos, y_pos, text, color=Colors.colors[self.index], size=size)
 
 
     def spine_setting(self, ax):

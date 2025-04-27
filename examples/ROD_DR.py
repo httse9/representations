@@ -65,7 +65,67 @@ class RODCycle_DR(RODCycle):
 
                 self.representation[s] += self.representation_step_size * (np.exp(r / self.lambd) * (indicator + self.representation[ns]) - self.representation[s])
 
+
     def compute_eigenvector(self):
+        """
+        NEW WAY
+        """
+        DR = (self.representation + self.representation.T) / 2
+
+        # get idx of visited states
+        visited_idx = (DR.sum(1) != 1)
+        DR_visited = DR[visited_idx][:, visited_idx]
+
+        # do eigendecomposition only on visited states for stability
+        DR_visited = arb_mat(DR_visited.tolist())
+        lamb_visited, e_visited = DR_visited.eig(right=True, algorithm="approx", )
+        lamb_visited = np.array(lamb_visited).astype(np.clongdouble).real.flatten()
+        e_visited = np.array(e_visited.tolist()).astype(np.clongdouble).real.astype(np.float32)
+
+        # sort eigenvalue and eigenvectors
+        idx = np.argsort(lamb_visited)
+        lamb_visited = lamb_visited[idx]
+        e_visited = e_visited.T[idx]
+
+        # get top eigenvector, assert same sign for all entries
+        e0_visited = e_visited[-1]
+
+        # debug
+        # if not ((e0_visited <= 0).all() or (e0_visited >= 0).all()):
+        #     job_id = os.environ.get('SLURM_JOB_ID')
+        #     with open(f"minigrid_basics/fail-{job_id}.pkl", "wb") as f:
+        #         pickle.dump(self.representation, f)
+
+
+        # multiplicity of top eigenvalue might be greated than 1
+        # positive top eigenvector hidden in space spanned by the
+        # corresponding eigenvectors
+        # if this happens, use power iteration
+        if not ((e0_visited <= 0).all() or (e0_visited >= 0).all()):
+            DR_visited = DR[visited_idx][:, visited_idx]
+            e0_visited = power_iteration(DR_visited)
+
+        assert (e0_visited <= 0).all() or (e0_visited >= 0).all()
+
+        # project back to full state space
+        e0 = np.zeros_like(visited_idx).astype(float)
+        e0[visited_idx] = e0_visited
+
+        # take log
+        if e0.sum() < 0:
+            e0 *= -1
+        log_e0 = np.where(e0 > 0, np.log(e0), e0)       # apply log only on positive entries
+
+        # normalize
+        if (log_e0 != 0).any():
+            log_e0 /= np.sqrt(log_e0 @ log_e0)
+        else:
+            log_e0 += 1 / np.sqrt(self.env.num_states)
+        assert np.isclose(log_e0 @ log_e0, 1.0)
+
+        return log_e0
+
+    def compute_eigenvector_old(self):
         """
         DR eigenvector. Take log
         Return loged eigenvector
@@ -87,6 +147,7 @@ class RODCycle_DR(RODCycle):
 
         # handle edge case
         if not ((e0 <= 0).all() or (e0 >= 0).all()):
+            print("edge")
             # search from eigenvalues 1
             for v in reversed(e):
                 if ((v <= 0).all() or (v >= 0).all()) and (v != 0).astype(int).sum() > 1:
@@ -133,7 +194,7 @@ After flipping, algorithm encourages to go to them.
 if __name__ == "__main__":
     
 
-    env_name = "gridroom_2"
+    env_name = "gridroom_25"
 
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
@@ -143,10 +204,10 @@ if __name__ == "__main__":
     env = gym.make(env_id, seed=42, no_goal=True)
     env = maxent_mdp_wrapper.MDPWrapper(env, )
 
-    # rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.05, dataset_size=100)
+    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.03, dataset_size=100, p_option=0.1, n_steps=200)
     
     # trying to find settings where it fails, and the I can use my fix to fix it.
-    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.01, dataset_size=100)
+    # rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.01, dataset_size=100)
 
     rewards, visit_percentage = rodc.rod_cycle(n_iterations=100)
 
