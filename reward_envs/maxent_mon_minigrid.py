@@ -224,7 +224,7 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
     # it can't drop it, it can't toggle nor call it a day (done).
     self.step_count += 1
 
-    reward = self._reward()
+    reward = self.reward()
     # done = False
     terminated = False
     truncated = False
