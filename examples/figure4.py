@@ -53,10 +53,10 @@ if __name__ == "__main__":
     ]
 
     env_labels = [
-        "Modified Grid Task", "Modified Grid Task (Reward)",
-        "Four Rooms", "Four Rooms (Reward)",
-        "Modified Grid Room", "Modified Grid Room (Reward)",
-        "Modified Grid Maze", "Modified Grid Maze (Reward)"
+        "Grid Task",# "Modified Grid Task (Reward)",
+        "Four Rooms",# "Four Rooms (Reward)",
+        "Grid Room", #"Modified Grid Room (Reward)",
+        "Grid Maze",# "Modified Grid Maze (Reward)"
     ]
 
     modes = [
@@ -140,8 +140,20 @@ if __name__ == "__main__":
     'font.size': 12  # set your preferred default size here
     })
 
-    fig, axs = plt.subplots(2, 4, figsize=(13, 5))
+    fig, axs = plt.subplots(1, 4, figsize=(13, 2.8))
     axs = axs.T.flatten()
+
+    plot_reward_env = False
+
+    # plot only environments with low-reward regions
+    if plot_reward_env:
+        idx = ["2" in e for e in envs]
+    else:
+        idx = ["2" not in e for e in envs]
+
+    envs = [x for x, m in zip(envs, idx) if m]
+    env_specific_axis_setting = [x for x, m in zip(env_specific_axis_setting, idx) if m]
+
 
     for env, env_label, axis_setting, ax in zip(envs, env_labels, env_specific_axis_setting, axs):
         print(env)
@@ -165,29 +177,30 @@ if __name__ == "__main__":
                 elif mode == "DR_potential":
                     plotter.draw_text(ax, 4500, -5, label, size=12)
 
+            if env =="dayan_2":
+                if mode == "none":
+                    plotter.draw_text(ax, 5800, -65, label, size=12)
+                elif mode == "SR_wang":
+                    plotter.draw_text(ax, 6000, -360, label, size=12)
+                elif mode == "SR_potential":
+                    plotter.draw_text(ax, 2500, -60, label, size=12)
+                elif mode == "DR_potential":
+                        plotter.draw_text(ax, 7200, -4, label, size=12)
+
             plotter.index += 1
 
-        if env == "dayan":
-            plotter.finalize_plot(ax, ylabel="Return", title=env_label, axis_setting=axis_setting)
+        xlabel = None
+        ylabel = None
 
-            ax.annotate("Without Lava", xy=(0.1, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
-                xycoords=ax.yaxis.label, textcoords='offset points',
-                size='medium', ha='right', va='center', rotation=90)
-            
-        elif env == "dayan_2":
-            plotter.finalize_plot(ax, xlabel="Thousand Steps", ylabel="Return", axis_setting=axis_setting)
+        if "dayan" in env:
+            ylabel = "Return"
 
-            ax.annotate("With Lava", xy=(0.1, 0.5), xytext=(-ax.yaxis.labelpad - 5, 0),
-                xycoords=ax.yaxis.label, textcoords='offset points',
-                size='medium', ha='right', va='center', rotation=90)
+        if "2" in env:
+            xlabel = "Thousand Steps"
 
-        elif "Reward" in  env_label:
-            plotter.finalize_plot(ax, xlabel="Thousand Steps", axis_setting=axis_setting)
-        else:
-            plotter.finalize_plot(ax, title=env_label, axis_setting=axis_setting)
+        
+        plotter.finalize_plot(ax, xlabel=xlabel, ylabel=ylabel, title=env_label, axis_setting=axis_setting)
 
-
-        # fig.text(-1, 0.5, 'Low-Reward Region', va='center', rotation='vertical', fontsize=14)
 
         # x tick
         total_timesteps = axis_setting[1]
@@ -204,5 +217,9 @@ if __name__ == "__main__":
         tick_positions = range(0, min_return - 1, min_return // interval)
         ax.set_yticks(tick_positions)
 
-    plt.savefig("minigrid_basics/plots/Figure_4.png", dpi=300, bbox_inches='tight')
+    if plot_reward_env:
+        fig_num = 4
+    else:
+        fig_num = 5
+    plt.savefig(f"minigrid_basics/plots/Figure_{fig_num}.png", dpi=300, bbox_inches='tight')
     # plt.show()

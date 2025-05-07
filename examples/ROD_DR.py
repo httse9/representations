@@ -219,7 +219,7 @@ After flipping, algorithm encourages to go to them.
 if __name__ == "__main__":
     
 
-    env_name = "gridroom_25"
+    env_name = "gridmaze_29"
 
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
@@ -229,7 +229,7 @@ if __name__ == "__main__":
     env = gym.make(env_id, seed=42, no_goal=True)
     env = maxent_mdp_wrapper.MDPWrapper(env, )
 
-    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.03, dataset_size=100, p_option=0.1, n_steps=200)
+    rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.03, dataset_size=100, p_option=0.1, n_steps=200, lambd=1.3)
     
     # trying to find settings where it fails, and the I can use my fix to fix it.
     # rodc = RODCycle_DR(env, learn_rep_iteration=1, num_options=1, representation_step_size=0.01, dataset_size=100)
