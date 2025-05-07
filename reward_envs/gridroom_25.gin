@@ -15,10 +15,10 @@ MaxEntMonMiniGridEnv.ascii_grid = """
 *    *    *    *    *llll*
 *         *         *llll*
 *    *         *    *    *
-*    *    *    *    *    *
-*** ***** ************* **
-*    *    *llll*    *    *
-*    *    *llll     *    *
+*    *    *    *    *llll*
+*** ***** *************l**
+*    *    *llll*    *llll*
+*    *    *llll     *llll*
 *    *     llll*        g*
 *    *    *llll*    *    *
 ** ******************* ***
