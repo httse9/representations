@@ -33,7 +33,8 @@ def read_data(env, init, eps, stepsize):
 
 if __name__ == "__main__":
 
-    envs = ["dayan", "dayan_2", "fourrooms", "fourrooms_2", "gridroom", "gridroom_2", "gridmaze", "gridmaze_2",]
+    # envs = ["dayan", "dayan_2", "fourrooms", "fourrooms_2", "gridroom", "gridroom_2", "gridmaze", "gridmaze_2",]
+    envs = ["gridroom_25", "gridmaze_29"]
 
     # enumerate over environments
     for env in envs:
@@ -76,6 +77,9 @@ qlearning_best_hyperparameters = [
     [-10, 0.15, 1.0],
     [-10, 0.2, 0.3],
     [-10, 0.2, 0.3],
-    [-10, 0.2, 0.3],
+    [-10, 0.2, 0.1],
     [0, 0.2, 1.0]
 ]
+
+# gridroom_25: [-10, 0.2, 0.3]      # (no seeds learn anything...)
+# gridmaze_29: [-10, 0.2, 0.3]

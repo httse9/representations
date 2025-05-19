@@ -48,7 +48,9 @@ SR_best_hyperparameters = [
     [0.1, 100, 10, 0.1, 1],
     [0.1, 100, 10, 0.1, 1],
     [0.1, 100, 100, 0.01, 1],
-    [0.1, 100, 100, 0.01, 1]
+    [0.1, 100, 100, 0.01, 1],
+    # [0.05, 100, 100, 0.01, 1],    # gridroom_25
+    # [0.05, 100, 100, 0.01, 1]     # gridmaze_29
 ]
 
 DR_best_hyperparameters = [
@@ -59,18 +61,21 @@ DR_best_hyperparameters = [
     [0.1, 100, 1, 0.01, 1],
     [0.1, 100, 1, 0.03, 1],
     [0.1, 100, 1, 0.01, 1],
-    [0.1, 100, 1, 0.01, 1]
+    [0.1, 100, 1, 0.01, 1],
+    # [0.05, 100, 1, 0.03, 1],
+    # [0.1, 100, 1, 0.03, 1]
 ]
+
 
 if __name__ == "__main__":
 
-    envs = ["dayan", "dayan_2", "fourrooms", "fourrooms_2", "gridroom", "gridroom_2", "gridmaze", "gridmaze_2",]
+    envs = ["dayan", "dayan_2", "fourrooms", "fourrooms_2", "gridroom", "gridroom_2", "gridmaze", "gridmaze_2"]#, "gridroom_25", "gridmaze_29"]
 
     env_labels = [
-        "Modified Grid Task",
+        "Grid Task",
         "Four Rooms",
-        "Modified Grid Room",
-        "Modified Grid Maze", 
+        "Grid Room",
+        "Grid Maze", 
     ]
     
 
@@ -117,7 +122,7 @@ if __name__ == "__main__":
         plotter.plot_data(ax, x, p_dr, plot_conf_int=False, plot_all_seeds=True)
 
         if "dayan" in  env_name:
-            y_label = "State Visit Percentage"
+            y_label = "State Visitation %"
             plotter.index = 0
             plotter.draw_text(ax, -0.2, 0.95, "CEO")
             plotter.index = 1
@@ -129,7 +134,7 @@ if __name__ == "__main__":
 
             
 
-        plotter.finalize_plot(ax, title=env_label, xlabel="Thousand Steps", ylabel=y_label, axis_setting=(None, None, 0, None))
+        plotter.finalize_plot(ax, title=env_label, xlabel="Steps ($×10^3$)", ylabel=y_label, axis_setting=(None, None, 0, None))
 
     plt.savefig(f"minigrid_basics/plots/rod_Figure_3.png", dpi=300)
     plt.close()
@@ -138,7 +143,7 @@ if __name__ == "__main__":
 
     fig, axs = plt.subplots(2, 4, figsize=(13, 5))
     axs = axs.T
-    idx = ["2" in e for e in envs]
+    idx = ["2" in e for e in envs]#
     envs = [x for x, m in zip(envs, idx) if m]
     # env_labels = [x for x in env_labels for _ in range(2)]
     SR_best_hyperparameters = [x for x, m in zip(SR_best_hyperparameters, idx) if m]
@@ -178,7 +183,7 @@ if __name__ == "__main__":
             plotter.draw_text(ax[0], 1.2, 0.8, "RW")
 
 
-        y_label = "State Visit Percentage" if "dayan" in env_name else None
+        y_label = "State Visitation %" if "dayan" in env_name else None
 
         plotter.finalize_plot(ax[0], title=env_label, xlabel=None, ylabel=y_label,)
 
@@ -205,9 +210,9 @@ if __name__ == "__main__":
         tick_positions = range(0, min_return - 1, min_return // interval)
         ax[1].set_yticks(tick_positions)
 
-        y_label = "Cumulative Rewards (K)" if "dayan" in env_name else None
+        y_label = "Cumulative Rewards ($×10^3$)" if "dayan" in env_name else None
 
-        plotter.finalize_plot(ax[1], title=None, xlabel="Thousand Steps", ylabel=y_label)
+        plotter.finalize_plot(ax[1], title=None, xlabel="Steps ($×10^3$)", ylabel=y_label)
 
     plt.savefig(f"minigrid_basics/plots/rod_Figure_4.png", dpi=300)
 

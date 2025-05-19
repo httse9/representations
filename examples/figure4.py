@@ -195,8 +195,8 @@ if __name__ == "__main__":
         if "dayan" in env:
             ylabel = "Return"
 
-        if "2" in env:
-            xlabel = "Thousand Steps"
+        # if "2" in env:
+        xlabel = "Steps ($×10^3$)"
 
         
         plotter.finalize_plot(ax, xlabel=xlabel, ylabel=ylabel, title=env_label, axis_setting=axis_setting)

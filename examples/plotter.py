@@ -142,7 +142,7 @@ if __name__ == "__main__":
         y = np.random.normal(0, 5, size=(5, 200))  
 
         plotter.plot_data(ax, x, y, plot_all_seeds=False, plot_conf_int=True)
-        plotter.index += 1
+        plotter.index += 1      # index corresponds to different colors
         
     plotter.finalize_plot(ax, title="Dayan", xlabel="Timesteps", y_label="Return")
     plt.show()

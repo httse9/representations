@@ -42,15 +42,18 @@ def read_data(env_name, representation, p_option, dataset_size, learn_rep_iterat
 def check_seed(env_name, representation, p_option, dataset_size, learn_rep_iteration, representation_step_size, num_options, seed=10):
     path = join(rod_directory, env_name, representation)
 
-    num_successful_seeds = 0
+    successful_seeds = []
 
     for s in range(1, seed + 1):
         filename = construct_filename(p_option, dataset_size, learn_rep_iteration, representation_step_size, num_options, s)
-        num_successful_seeds += int(os.path.isfile(join(path, filename)))
-    
-    seed_missing = num_successful_seeds < seed  # whether some seeds are missing
 
-    return seed_missing, num_successful_seeds
+        file_exists = os.path.isfile(join(path, filename))
+        if file_exists:
+            successful_seeds.append(s)
+    
+    seed_missing = len(successful_seeds) < seed  # whether some seeds are missing
+
+    return seed_missing, successful_seeds
 
 ## hyperparameters
 p_option = [0.01, 0.05, 0.1]
@@ -106,10 +109,12 @@ if __name__ == "__main__":
         b) more advanced: 
     """
 
-    envs = ["dayan", "dayan_2", "fourrooms", "fourrooms_2", "gridroom", "gridroom_2", "gridmaze", "gridmaze_2",]
+    # envs = ["dayan", "dayan_2", "fourrooms", "fourrooms_2", "gridroom", "gridroom_2", "gridmaze", "gridmaze_2",]
+    envs = ["gridroom_25"]
 
-    ### check seeds
-    # for env in ["gridroom_2"]:
+    ## check seeds
+    # dataset_size = [100]
+    # for env in ["gridroom_25"]:
     #     print(">>>>>>>>>", env, flush=True)
     #     check_seed_env(env, "DR")
 
@@ -150,9 +155,9 @@ if __name__ == "__main__":
                 r_dict[env_name][rep] = rs
 
 
+
     ### plot
     plotter = Plotter()
-
 
     # generate plots
     dataset_size = [100, ]
@@ -184,6 +189,7 @@ if __name__ == "__main__":
             for p, r in zip(ps, rs):
                 # if p.shape[0] < 10:       # some seeds failed, ignore
                 #     continue
+
                 
                 if p.shape[0] == 10:
                     p_auc.append(p.mean(0).mean())    # state visitation AUC
@@ -221,6 +227,7 @@ if __name__ == "__main__":
         plt.clf()
 
     
+    quit()
     dataset_size = [100, 100000]
     hyperparameter_list = [p_option, dataset_size, learn_rep_iter, rep_lr, num_options]
     hyperparameter_names = ["p_option", "dataset_size", "learn_rep_iter", "rep_lr", "num_options"]
