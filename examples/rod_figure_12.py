@@ -76,10 +76,10 @@ if __name__ == "__main__":
     envs = ["dayan", "dayan_2", "fourrooms", "fourrooms_2", "gridroom", "gridroom_2", "gridmaze", "gridmaze_2",]
 
     env_labels = [
-        "Modified Grid Task",
+        "Grid Task",
         "Four Rooms",
-        "Modified Grid Room",
-        "Modified Grid Maze", 
+        "Grid Room",
+        "Grid Maze", 
     ]
 
     ### read data
@@ -192,10 +192,10 @@ if __name__ == "__main__":
             plotter.draw_text(ax, 0.925, -3.85, "RW")
 
         if "dayan" in env_name:
-            y_label = "Average Reward"
+            y_label = "Avg. Reward"
         else:
             y_label = None
-        plotter.finalize_plot(ax, title=env_label, xlabel="Average State Visit Percentage", ylabel=y_label)
+        plotter.finalize_plot(ax, title=env_label, xlabel="Avg. State Visitation %", ylabel=y_label)
         plt.tight_layout()
 
        
@@ -264,10 +264,10 @@ if __name__ == "__main__":
             plotter.draw_text(ax, 0.99, -3.9, "RW")
 
         if "dayan" in env_name:
-            y_label = "Average Reward"
+            y_label = "Avg. Reward"
         else:
             y_label = None
-        plotter.finalize_plot(ax, title=env_label, xlabel="Average State Visit Percentage", ylabel=y_label)
+        plotter.finalize_plot(ax, title=env_label, xlabel="Avg. State Visitation %", ylabel=y_label)
 
 
        

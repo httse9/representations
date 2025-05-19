@@ -168,7 +168,9 @@ if __name__ == "__main__":
         "gridroom": 120,
         "gridroom_2": 120,
         "gridmaze": 120,
-        "gridmaze_2": 120
+        "gridmaze_2": 120,
+        "gridmaze_29": 120,
+        "gridroom_25": 120
     }
     
     args = vars(get_args())
@@ -177,6 +179,9 @@ if __name__ == "__main__":
 
     args['env'] = create_env(env_name, seed)
     set_random_seed(seed)
+
+    if env_name in ["gridroom_25", "gridmaze_29"]:
+        args['n_steps'] = 200
 
     
     rod_cycle = ROD_Q(**args)

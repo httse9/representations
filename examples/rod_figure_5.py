@@ -12,6 +12,9 @@ from minigrid_basics.custom_wrappers import maxent_mdp_wrapper
 import gin
 import gym
 
+plt.rcParams.update({
+'font.size': 12  # set your preferred default size here
+})
 
 rod_directory = join("minigrid_basics", "experiments", "rod")
 
@@ -77,10 +80,11 @@ if __name__ == "__main__":
     ### Figure 5
     # visualization of cumulative visit of SR and DR in four low-reward environments
 
-    fix, axs = plt.subplots(2, 4, figsize=(12, 6))
+    fix, axs = plt.subplots(1, 8, figsize=(12, 2))
+    axs = axs.reshape(4, 2)
 
 
-    for env_name, ax, SR_hyper, DR_hyper in zip(envs, axs.T, SR_best_hyperparameters, DR_best_hyperparameters):
+    for env_name, ax, SR_hyper, DR_hyper in zip(envs, axs, SR_best_hyperparameters, DR_best_hyperparameters):
 
         # SR visits
         _, SR_visits = read_data(env_name, "SR", *SR_hyper)
@@ -110,9 +114,11 @@ if __name__ == "__main__":
         # visualize
         visualizer = Visualizer(env)
         visualizer.visualize_shaping_reward_2d(SR_visits, ax=ax[0], normalize=False, vmin=vmin, vmax=vmax)
+        # ax[0].set_title("CEO")
         visualizer.visualize_shaping_reward_2d(DR_visits, ax=ax[1], normalize=False, vmin=vmin, vmax=vmax)
-
+        # ax[1].set_title("RACE")
     
+    plt.tight_layout()
     plt.savefig(f"minigrid_basics/plots/rod_Figure_5.png", dpi=300)
         
     
