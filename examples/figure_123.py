@@ -128,9 +128,9 @@ if __name__ == "__main__":
     lambds = [1.3] * 8
 
     # run below separately
-    figure_1(reward_envs)
+    # figure_1(reward_envs)
 
     # figure_2(reward_envs, lambds)
 
-    # figure_3(envs)
+    figure_3(envs)
 

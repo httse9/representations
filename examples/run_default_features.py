@@ -47,11 +47,37 @@ def learn_DF(env):
     df_learner.learn(100000)
     return df_learner.df
 
+def generate_test_reward_and_policy(env):
+    terminal_rewards = []
+    pis = []
+    for i in range(100):
+        print(i)
+        terminal_reward = sample_terminal_reward()
+        terminal_rewards.append(terminal_reward)
+
+        qlearner = QLearner(env, 1.0, terminal_reward=terminal_reward)
+        qlearner.learn(100000)
+        pi = qlearner.get_current_policy()
+        pis.append(pi)
+
+    path = join("minigrid_basics", "experiments", "transfer", env_name)
+
+    data = dict(
+        terminal_rewards=terminal_rewards,
+        pis=pis
+    )
+
+    with open(join(path, "test_data.pkl"), "wb") as f:
+        pickle.dump(data, f)
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--feature", type=str, help="SF or DF")
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
+
+    parser.add_argument("--generate_test_data", action="store_true")
     args = parser.parse_args()
 
 
@@ -64,6 +90,10 @@ if __name__ == "__main__":
 
     np.random.seed(args.seed)
     random.seed(args.seed)
+
+    if args.generate_test_data:
+        generate_test_reward_and_policy(env)
+        quit()
 
     # if args.feature == "SF":
     SFs = learn_SF(env)
