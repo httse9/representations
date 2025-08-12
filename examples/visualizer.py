@@ -59,6 +59,7 @@ class Visualizer:
 
         plt.imshow(image)
         plt.axis('off')
+        plt.tight_layout()
 
 
     def visualize_shaping_reward_2d(self, reward, ax=None, normalize=True, vmin=0, vmax=1):
@@ -128,6 +129,45 @@ class Visualizer:
                 if grid[i, j] == '*':
                     # wall
                     image[i, j, :3] = np.array((44, 62, 80)) / 255.
+
+
+        ax.imshow(image)
+
+        for s, a, in enumerate(option['policy']):
+
+            x, y = self.env.state_to_pos[s]
+
+            # if termination, plot terminate sign
+            if option['termination'][s]:
+                ax.plot([x], [y], marker='o', markersize=marker_size, color='#c0392b')
+                continue
+
+            # if not termination set, plot action
+            ax.plot([x ], [y ], marker=action_markers[a], markersize=marker_size, color="#1abc9c")
+            
+        ax.axis('off')
+        plt.tight_layout()
+
+
+    def visualize_option_with_env_reward(self, option, ax=None):
+        marker_size = 9.5
+
+        if ax is None:
+            ax = plt.gca()
+
+        grid = self.env.raw_grid.T
+        h, w = grid.shape
+        image = np.ones((h, w, 3))
+
+        # draw walls
+        for i in range(h):
+            for j in range(w):
+                if grid[i, j] == '*':
+                    # wall
+                    image[i, j, :3] = np.array((44, 62, 80)) / 255.
+                elif grid[i, j] == 'l':
+                    # lava
+                    image[i, j] = np.array((231, 76, 60)) / 255.    # orange
 
 
         ax.imshow(image)

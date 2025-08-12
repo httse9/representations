@@ -61,7 +61,9 @@ ASCII_TO_OBJECT = {
     'g': minigrid.Goal,
     'l': None,
     'm': None,
-    'h': None
+    'h': None,
+    't': minigrid.Goal,
+    "a": minigrid.Goal
 }
 
 # reward_dict = {
@@ -111,7 +113,7 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
                mission='Reach the goal',
                max_steps=100, see_through_walls=True, seed=1337,
                agent_view_size=7, stochasticity=0.0, episodic=True,
-               reward_dict=None, no_goal=False):
+               reward_dict=None, no_goal=False, no_start=False):
     """Constructor for MonMinigrid.
 
     The specifics of the environment are specified through gin files, and
@@ -144,7 +146,7 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
 
     # 
     self.no_goal = no_goal
-
+    self.no_start = no_start
     self._build_raw_grid()
 
     # 
@@ -173,7 +175,13 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
     if self.no_goal:
       for x in range(self.width):
         for y in range(self.height):
-          if self._raw_grid[x, y] == 'g':
+          if self._raw_grid[x, y] in ['g', 't', 'a']:
+            self._raw_grid[x, y] = ' '
+
+    if self.no_start:
+      for x in range(self.width):
+        for y in range(self.height):
+          if self._raw_grid[x, y] == 's':
             self._raw_grid[x, y] = ' '
 
     # If a start position has been specified, add it to grid.
@@ -268,7 +276,8 @@ class MaxEntMonMiniGridEnv(minigrid.MiniGridEnv):
     # we can just use agent_pos here cause we transposed the ascii grid when parsing
     x, y = self.agent_pos   
 
-    return self.reward_dict[self._raw_grid[x, y]]
+    # return self.reward_dict[self._raw_grid[x, y]]
+    return self.reward_grid[x, y]
   
   def reward(self):
     return self._reward()

@@ -289,14 +289,14 @@ if __name__ == "__main__":
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
 
-    np.random.seed(42)
+    np.random.seed(0)
 
-    env = gym.make(env_id, seed=42, no_goal=True)
+    env = gym.make(env_id, seed=0, no_goal=True)
     env = maxent_mdp_wrapper.MDPWrapper(env, )
 
-    rodc = RODCycle(env, learn_rep_iteration=10)
+    rodc = RODCycle(env, learn_rep_iteration=10, dataset_size=100, representation_step_size=0.1, p_option=0.1, num_options=1)
 
-    rewards, visit_percentage = rodc.rod_cycle(n_iterations=10)
+    rewards, visit_percentage = rodc.rod_cycle(n_iterations=100)
 
     for i in range(1, len(rewards)):
         rewards[i] += rewards[i - 1]

@@ -112,3 +112,37 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
           self.rewards[s1] = r
 
     self.nonterminal_idx = (self.transition_probs.sum(-1).sum(-1) != 0)
+
+  def custom_rgb(self):
+    """
+    Visualize environment
+    """
+    grid = self.env.raw_grid.T
+    h, w = grid.shape
+    image = np.ones((h, w, 3))
+
+    for i in range(h):
+        for j in range(w):
+            if grid[i, j] == '*':
+                # wall
+                image[i, j] = np.array((44, 62, 80)) / 255.  # gray
+
+            elif grid[i, j] == 'l':
+                # lava
+                image[i, j] = np.array((231, 76, 60)) / 255.    # orange
+
+            ### self.env.raw_grid stores the initial configuration of the environment
+            ### We need to read the current position of the agent using self.env.agent_pos (see below after for loop)
+            # elif grid[i, j] == 's':
+            #     # agent
+            #     image[i, j] = np.array((41, 128, 185)) / 255.   # blue
+
+            elif grid[i, j] == 'g':
+                # goal
+                image[i, j] = np.array((46, 204, 113)) / 255. # green
+
+    # read current agent position and draw agent
+    y, x = self.unwrapped.agent_pos
+    image[x, y] = np.array((41, 128, 185)) / 255.
+
+    return image
