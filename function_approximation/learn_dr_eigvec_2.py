@@ -436,6 +436,9 @@ if __name__ == "__main__":
     with open(join(exp_path, f"{args.seed}-cos-sim.pkl"), "wb") as f:
         pickle.dump(css, f)
 
+    with open(join(exp_path, f"{args.seed}-eigvec.pkl"), 'wb') as f:
+        pickle.dump(eigvec, f)
+
     # stat_names = stats[0].keys()
     # n = len(stat_names)
 
