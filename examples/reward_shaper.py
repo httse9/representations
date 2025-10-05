@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 ctx.dps = 100   # important
 # print(ctx)
 
-def symmetrize(M):
+def sym(M):
     return (M + M.T) / 2
 
 
@@ -83,7 +83,7 @@ class RewardShaper:
     
     def SR_top_eigenvector(self, pi=None, gamma=0.99):
         # make symmetric to ensure real eigenvectors and eigenvalues
-        SR = symmetrize(self.compute_SR(pi=pi, gamma=gamma))
+        SR = sym(self.compute_SR(pi=pi, gamma=gamma))
 
         lamb, e = np.linalg.eig(SR)
         idx = lamb.argsort()
@@ -102,7 +102,7 @@ class RewardShaper:
     #     Compute the top eigenvector for the log of the DR.
     #     """
     #     # make symmetric to ensure real eigenvectors and eigenvalues
-    #     DR = symmetrize(self.compute_DR(pi=pi, lambd=lambd))
+    #     DR = sym(self.compute_DR(pi=pi, lambd=lambd))
 
     #     # take log
     #     DR = np.log(DR)
@@ -119,12 +119,14 @@ class RewardShaper:
 
     #     return e0
     
-    def DR_top_log_eigenvector(self, pi=None, lambd=1.0):
+    def DR_top_log_eigenvector(self, pi=None, lambd=1.0, normalize=True, symmetrize=True):
         """
         Compute log of the top eigenvector of the DR.
         """
-        DR = symmetrize(self.compute_DR(pi=pi, lambd=lambd))
-        assert (DR > 0).all()
+        DR = self.compute_DR(pi=pi, lambd=lambd)
+        if symmetrize:
+            DR = sym(DR)
+        assert (DR >= 0).all()
 
         DR = arb_mat(DR.tolist())
         lamb, e = DR.eig(right=True, algorithm="approx", )
@@ -142,8 +144,10 @@ class RewardShaper:
         assert (e0 > 0).all()
 
         log_e0 = np.log(e0)
-        log_e0 /= np.sqrt(log_e0 @ log_e0)
-        assert np.isclose(log_e0 @ log_e0, 1.0)
+
+        if normalize:
+            log_e0 /= np.sqrt(log_e0 @ log_e0)
+            assert np.isclose(log_e0 @ log_e0, 1.0)
 
         return log_e0
     

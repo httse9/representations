@@ -4,6 +4,7 @@ import gym
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib as mpl
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 # testing imports
 import gin
@@ -62,7 +63,7 @@ class Visualizer:
         plt.tight_layout()
 
 
-    def visualize_shaping_reward_2d(self, reward, ax=None, normalize=True, vmin=0, vmax=1):
+    def visualize_shaping_reward_2d(self, reward, ax=None, normalize=True, vmin=0, vmax=1, cmap="Reds"):
 
         if ax is None:
             ax = plt.gca()
@@ -96,8 +97,55 @@ class Visualizer:
 
         # use plt cmap to get colored image
         # cmap = plt.get_cmap('rainbow')
-        cmap = plt.get_cmap('Reds')
+        cmap = plt.get_cmap(cmap)
         norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+        scalar_map = cm.ScalarMappable(norm=norm, cmap=cmap)
+        image = scalar_map.to_rgba(image)
+
+        # draw walls again
+        for i in range(h):
+            for j in range(w):
+                if grid[i, j] == '*':
+                    image[i, j, :3] = np.array((44, 62, 80)) / 255.
+        
+
+        ax.imshow(image)
+        ax.axis('off')
+        plt.tight_layout()
+
+    def visualize_vec(self, vec, ax=None, center=0):
+        """
+        Visualize a vector while centering at center
+        The center value will have neural color,
+        while larger values have red, smaller values have blue
+        """
+
+        if ax is None:
+            ax = plt.gca()
+
+        grid = self.env.raw_grid.T
+        h, w = grid.shape
+        image = np.ones((h, w))
+
+        # construct the map with reward
+        # let walls have value 0 for now
+        state_num = 0
+        for i in range(h):
+            for j in range(w):
+                if grid[i, j] == '*':
+                    # wall
+                    image[i, j] = 0.
+                    continue
+
+                # set reward
+                image[i, j] = vec[state_num]
+                state_num += 1
+
+        # use plt cmap to get colored image
+        c1 = (0.03137254901960784, 0.18823529411764706, 0.4196078431372549, 1.0) #"#3498db"
+        c2 = (0.403921568627451, 0.0, 0.05098039215686274, 1.0) #"#e74c3c"
+        cmap = LinearSegmentedColormap.from_list("flat_coolwarm", [c1, "white", c2])    # custom flat color map
+        norm = mpl.colors.CenteredNorm(vcenter=center)
         scalar_map = cm.ScalarMappable(norm=norm, cmap=cmap)
         image = scalar_map.to_rgba(image)
 

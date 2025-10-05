@@ -165,3 +165,5 @@ experiments
 DR_ROD/
 SR_ROD/
 **/dr_eigvec_tabular_plots/
+**/experiments
+**/eigvec_learning

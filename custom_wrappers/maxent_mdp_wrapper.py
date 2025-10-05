@@ -52,7 +52,7 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
   """Wrapper to provide access to the MDP objects (namely, `transition_probs` and `rewards`).
   """
 
-  def __init__(self, env, tile_size=8, get_rgb=False, goal_absorbing=False):
+  def __init__(self, env, tile_size=8, get_rgb=False, goal_absorbing=False, goal_absorbing_reward=-1e-3):
     """
     goal_absorbing: whether the goal states are absorbing. If True, goal state
       transition to itself with prob 1. If False, goal state transition to 
@@ -89,15 +89,24 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
           # set reward of goal states
 
           self.terminal_idx.append(s1)
-
           self.rewards[s1] = self.reward_dict[env._raw_grid[x, y]] 
+
           if goal_absorbing:
+            """
+            Note that the changes here only affect the transition prob matrix(?) and reward vector
+            that we construct for the sake of computing the DR, and does not affect the underlying MDP,
+            which still treats the goal as not absorbing.
+
+            We are changing how we formulate the DR, which is a part of the solution, and we are not
+            altering the problem setting in which we are operating, which is why the terminal state
+            is still non-absorbing, and has reward of 0.
+            """
             # if treat goal as absorbing state
             for a in range(self.num_actions):
               self.transition_probs[s1, a, s1] = 1.
 
-            # make sure reward at goal state is 0 if absorbing
-            assert self.rewards[s1] == 0.
+            # set reward to very tiny negative
+            self.rewards[s1] = goal_absorbing_reward
 
           continue
 

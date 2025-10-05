@@ -145,7 +145,7 @@ def jitted_update_step_DR(encoder, encoder_optimizer, observations, rewards, nex
     """
     Modify graph_loss for DR
     """
-
+    # aux = jnp.array([1e5, 1., -100, 100, 1e3])
     max_barrier_coefs, step_size_duals, min_duals, max_duals, barrier_scale = aux
     
     def encoder_loss(encoder, observations, rewards, next_observations, terminals, observations_2):
@@ -247,31 +247,28 @@ def train_allo_test(env,):
 
     allo_losses = []
     # full_dataset = collect_transitions_test(env, max_iter=10000)
-    with open("minigrid_basics/function_approximation/static_dataset/onehot_dataset.pkl", "rb") as f:
-        full_dataset = pickle.load(f)
+    with open("minigrid_basics/function_approximation/static_dataset/fourrooms_2_onehot.pkl", "rb") as f:
+        dataset = pickle.load(f)
 
     eig_dim = 1
     encoder = Encoder(obs_dim = env.num_states, feat_dim = 256, eig_dim = eig_dim, 
             duals_initial_val = 0, barrier_initial_val = 0,
-            obs_type = "one_hot", rngs = nnx.Rngs(0))
+            obs_type = "one_hot", rngs = nnx.Rngs(seed))
 
     optimizer = nnx.Optimizer(encoder, optax.adam(0.0003))
 
+    key = jax.random.PRNGKey(42)
+
     for i in range(5000):
 
-        # random.shuffle(full_dataset)
-        # dataset = full_dataset[:10000]
-        dataset = full_dataset
-
+        random.shuffle(dataset)
         states, actions, rewards, next_states, terminals = [jnp.array(x) for x in zip(*dataset)]
-        # print(next_states.shape)
 
         if i == 0:
             sm = states.mean(0)
-        
-        # exit()
 
-        states_2 = states[jax.random.permutation(jax.random.PRNGKey(42) ,states.shape[0])]
+        key, subkey = jax.random.split(key)
+        states_2 = states[jax.random.permutation(subkey ,states.shape[0])]
         
         aux = jnp.array([1e5, 1., -100, 100, 1e3])
 
@@ -289,29 +286,20 @@ def encoder_test(env, encoder, sm):
     for i in range(env.num_states):
         s = onehot(env.num_states, i)
         e = encoder(s)
-        # eigvec.append(e)
+        eigvec.append(e)
 
-        if e >= 0:
-            eigvec.append(e)
-        else:
-            eigvec.append(-e)
-
-    eigvec = np.array(eigvec)
+    eigvec = np.abs(np.array(eigvec))
 
     print(eigvec)
     # print(eigvec[28])
-
     # eigvec[28] = np.median(eigvec)
     
 
     visualizer = Visualizer(env)
-
     plt.subplot(1, 2, 1)
     visualizer.visualize_shaping_reward_2d(sm, ax=None, normalize=True, vmin=0, vmax=1)
-
     plt.subplot(1, 2, 2)
     visualizer.visualize_shaping_reward_2d(np.log(eigvec), ax=None, normalize=True, vmin=0, vmax=1)
-
     plt.show()
 
 def eigvec_myopic_policy(env, eigvec):
@@ -380,7 +368,6 @@ def plot_3d(env, v):
 
 if __name__ == "__main__":
     
-
     env_name = "fourrooms_2"
 
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
@@ -388,24 +375,26 @@ if __name__ == "__main__":
 
 
     # create env
-    np.random.seed(0)
-    env = gym.make(env_id, seed=0, no_goal=True, no_start=False)
+    seed = 1
+    np.random.seed(seed)
+    random.seed(seed)
+    env = gym.make(env_id, seed=seed, no_goal=False, no_start=True)
     env = maxent_mdp_wrapper.MDPWrapper(env)
 
 
-    visualizer = Visualizer(env)
-    shaper = RewardShaper(env)
+    # visualizer = Visualizer(env)
+    # shaper = RewardShaper(env)
 
     # visualizer.visualize_env()
     # plt.show()
 
-    SR = shaper.compute_DR()
-    plt.imshow(SR)
-    plt.show()
+    # SR = shaper.compute_DR()
+    # plt.imshow(SR)
+    # plt.show()
     # eigvec_DR = np.log(SR[31])
 
     # plt.subplot(1, 2,1 )
-    eigvec_DR = shaper.DR_top_log_eigenvector()
+    # eigvec_DR = shaper.DR_top_log_eigenvector()
     # visualizer.visualize_shaping_reward_2d(eigvec_DR)
     # plt.subplot(1, 2, 2)
     # eigvec_DR = shaper.SR_top_eigenvector()
@@ -433,6 +422,6 @@ if __name__ == "__main__":
     # print(len(dataset))
 
     # ##
-    # train_allo_test(env,)
+    train_allo_test(env,)
 
 
