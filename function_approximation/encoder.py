@@ -90,7 +90,7 @@ class DR_Encoder(nnx.Module):
             nnx.relu,
             nnx.Linear(feat_dim, feat_dim, rngs=rngs),
             nnx.relu,
-            nnx.Linear(feat_dim, eig_dim, rngs=rngs, use_bias=False),
+            nnx.Linear(feat_dim, eig_dim, rngs=rngs, use_bias=True),
         ])
         
         self.duals = nnx.Param(jnp.tril(duals_initial_val * jnp.ones((eig_dim, eig_dim))))

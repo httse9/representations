@@ -15,13 +15,22 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+from copy import deepcopy
 
 def create_dataset(env, obs_type):
     """
     Create a dataset consisting of all transitions in an environment
+
+    Each entry is (s, a, r, s', r', is_goal)
+    s: state
+    a: action
+    r: reward
+    s': next state
+    r': next reward
+    is_goal: whether current state, s, is terminal. Not s'!!
     """
 
-    dataset = []    # (s, a, r, s', is_goal?)
+    dataset = []    # (s, a, r, s', r', is_goal?)
     
     # enumerate over all states
     for s in range(env.num_states):
@@ -41,13 +50,7 @@ def create_dataset(env, obs_type):
         elif obs_type == "state_num":
             curr_s = s
 
-
-        # # if terminal state, 
-        # if s in env.terminal_idx:
-        #     for a in range(env.num_actions):
-
-        #         dataset.append((s, a, 0, 0, 1.))
-        #     continue
+        terminated = float(s in env.terminal_idx)
 
         for a in range(env.num_actions):
             # set start position to s
@@ -56,19 +59,27 @@ def create_dataset(env, obs_type):
             # take action a
             ns, r, done, d = env.step(a)
 
-            if obs_type == "onehot":
-                next_s = onehot(env.num_states, ns['state'])
-            elif obs_type == "coordinates":
-                next_x, next_y = env.agent_pos
-                next_s = np.array([next_x / env.width, next_y / env.height]) - 0.5
-                assert (next_s <= 1).all()
-            elif obs_type == "image":
-                next_s = env.custom_rgb()
-            elif obs_type == "state_num":
-                next_s = ns['state']
+            if terminated:
+                # if terminal state, transition to itself with prob 1
+                next_s = deepcopy(curr_s)
+                next_r = r
+
+            else:
+                if obs_type == "onehot":
+                    next_s = onehot(env.num_states, ns['state'])
+                elif obs_type == "coordinates":
+                    next_x, next_y = env.agent_pos
+                    next_s = np.array([next_x / env.width, next_y / env.height]) - 0.5
+                    assert (next_s <= 1).all()
+                elif obs_type == "image":
+                    next_s = env.custom_rgb()
+                elif obs_type == "state_num":
+                    next_s = ns['state']
+
+                next_r = env.reward()
 
             # record transition
-            dataset.append((curr_s, a, r, next_s, float(s in env.terminal_idx)))
+            dataset.append((curr_s, a, r, next_s, next_r, terminated))
 
     return dataset
 
@@ -121,8 +132,10 @@ def create_dataset_2(env, obs_type):
             elif obs_type == "state_num":
                 next_s = ns['state']
 
+            next_r = env.reward()
+
             # record transition
-            dataset.append((curr_s, a, r, next_s, float(ns['state'] in env.terminal_idx)))
+            dataset.append((curr_s, a, r, next_s, next_r, float(ns['state'] in env.terminal_idx)))
 
     return dataset
 
@@ -183,11 +196,13 @@ if __name__ == "__main__":
 
     np.random.seed(1)
     env = gym.make(env_id, seed=0, no_goal=False)
-    env = maxent_mdp_wrapper.MDPWrapper(env)
+    env = maxent_mdp_wrapper.MDPWrapper(env, goal_absorbing=True)
 
     dataset = create_dataset(env, args.obs_type)
     with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}.pkl", "wb") as f:
         pickle.dump(dataset, f)
+
+    # print(dataset)
 
     dataset = create_dataset_2(env, args.obs_type)
     with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_2.pkl", "wb") as f:
