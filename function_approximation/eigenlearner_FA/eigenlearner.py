@@ -11,12 +11,12 @@ jax.config.update("jax_enable_x64", True)
 
 class EigenLearner:
 
-    def __init__(self, env, dataset, test_set, args, lambd=1.0):
+    def __init__(self, env, dataset, test_set, args):
         self.env = env
         self.dataset = dataset
         self.test_set = test_set
         self.args = args
-        self.lambd = lambd
+        self.lambd = args.lambd
 
         ### useful objects to have
         r = self.env.rewards
@@ -25,9 +25,9 @@ class EigenLearner:
         # uniform random policy
         pi = np.ones((self.env.num_states, self.env.num_actions)) / self.env.num_actions
         self.P = (p * pi[..., None]).sum(1)       # P as defined in the DR paper.
-        self.R = np.diag(np.exp(-r / lambd))             # R as defined in the DR paper.
-        self.R_inv = np.diag(np.exp(r / lambd))         # R^(-1)
-        self.R_inv_sqrt = np.diag(np.exp(r / lambd / 2))         # R^(-1/2)
+        self.R = np.diag(np.exp(-r / self.lambd))             # R as defined in the DR paper.
+        self.R_inv = np.diag(np.exp(r / self.lambd))         # R^(-1)
+        self.R_inv_sqrt = np.diag(np.exp(r / self.lambd / 2))         # R^(-1/2)
 
     def init_learn(self):
         """
@@ -58,9 +58,11 @@ class EigenLearner:
             obs_dim = 256
             feat_dim = 256
 
+        eig_dim = 1
+
         rngs = nnx.Rngs(self.args.seed)
 
-        self.encoder = DR_Encoder(obs_dim, feat_dim, 1, 0, 0.5, self.args.obs_type, rngs)
+        self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs)
 
     def init_optimizer(self):
         step_size_schedule = optax.linear_schedule(
@@ -78,7 +80,10 @@ class EigenLearner:
         )
 
     def process_dataset(self):
-        self.processed_dataset = [jnp.array(x) for x in zip(*self.dataset)]
+        obs, actions, rewards, next_obs, next_rewards, terminals = [jnp.array(x) for x in zip(*self.dataset)]
+        rewards /= self.lambd
+        next_rewards /= self.lambd
+        self.processed_dataset = [obs, actions, rewards, next_obs, next_rewards, terminals]
 
     def compute_matrix(self):
         """
@@ -106,18 +111,21 @@ class EigenLearner:
 
 
     def learn(self):
+        
+        eigvec = self.eigvec()
+        self.norms.append((eigvec ** 2).sum())
+        self.cos_sims.append(self.cos_sim(eigvec))
+
         for i in range(self.args.n_epochs):
 
             self.update()
 
-            if (i + 1) % 100 == 0:
+            if (i + 1) % self.args.log_interval == 0:
                 eigvec = self.eigvec()
                 self.norms.append((eigvec ** 2).sum())
                 self.cos_sims.append(self.cos_sim(eigvec))
 
                 print(self.cos_sims[-1])
-
-
 
     def update(self):
         pass

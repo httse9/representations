@@ -37,7 +37,10 @@ class WGLLearner(EigenLearner):
         self.true_eigvec = e0 
 
     def eigvec(self):
-        return compute_eigvec(self.encoder, self.test_set, self.env.terminal_idx[0])
+        eigvec = compute_eigvec(self.encoder, self.test_set, self.env.terminal_idx[0])
+        if eigvec.sum() > 0:    # flip to a direction consistent with true eigvec
+            eigvec *= -1
+        return eigvec
 
 
     def update(self):
@@ -47,17 +50,13 @@ class WGLLearner(EigenLearner):
 
 @partial(nnx.jit, static_argnums=())
 def compute_eigvec(encoder, test_set, terminal_idx):
-    eigvec =  lax.stop_gradient(jnp.squeeze(encoder(test_set)))
+    eigvec = lax.stop_gradient(jnp.squeeze(encoder(test_set)))
     return eigvec.at[terminal_idx].set(0)
 
 
 @partial(nnx.jit, static_argnums=())
 def step(encoder, optimizer, obs, rewards, next_obs, next_rewards, terminals):
-    """
-    TODO:
-    1. incorporate lambda
-    2. put terminal state outside of network
-    """
+
     def loss_fn(encoder, obs, rewards, next_obs, next_rewards, terminals):
 
         rewards = jnp.expand_dims(rewards, 1)
@@ -87,7 +86,38 @@ Onehot
 - gridroom: done
   - rmsprop, need small step size (1e-4) large don't work.
   - switch to adam optimizer. converges much faster
-  - 
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --env gridroom --step_size_end 1e-4 --step_size_start 1e-4 --n_epochs 50000
+
+- dayan_2: done (lambd=10)
+  - use lambd = 10. When lambd = 1, ground-truth eigvec is almost constant for all non-low-reward states, and for all low-reward states
+  - converge rate is also much faster. Probably helps with reward propagating thru the space
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --env dayan_2 --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 10000 --lambd 10
+- fourrooms_2: done (lambd=10)
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --env fourrooms_2 --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 10000 --lambd 10
+- gridroom_2: 
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --env gridroom_2 --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 10000 --lambd 10
+
 
 Coordinates
+- dayan: done
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --obs_type coordinates --env dayan --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 10000 --lambd 10
+- fourrooms:done
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --obs_type coordinates --env fourrooms --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 10000 --lambd 10
+- gridroom: done
+  - takes a long time, but reaches 0.995
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --obs_type coordinates --env gridroom --step_size_start 1e-4   --n_epochs 100000 --lambd 20
+
+- dayan_2: done, easy
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --obs_type coordinates --env dayan_2 --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 10000 --lambd 20
+- fourrooms_2:done
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --obs_type coordinates --env fourrooms_2 --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 10000 --lambd 20
+- gridroom_2: done
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --obs_type coordinates --env gridroom_2 --step_size_start 1e-4 --step_size_end 1e-4  --n_epochs 100000 --lambd 20
+  - takes a long time, might need step size decay
+
+Image
+- dayan:
+  - I think works, just needs longer, reaches 0.99
+  - python -m minigrid_basics.function_approximation.eigenlearning_fa --obs_type image --env dayan --step_size_start 1e-4 --step_size_end 3e-5  --n_epochs 20000 --lambd 20
+  
 """
