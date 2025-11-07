@@ -80,6 +80,23 @@ class RewardShaper:
         DR = np.linalg.inv(np.diag(np.exp(-R / lambd)) - P_pi)
 
         return DR.copy()
+
+    def compute_DR_2(self, pi = None, lambd=1.0):
+        """
+        Compute DR with respect to pi.
+        If pi is None, use uniform random policy.
+        """
+        if pi is None:
+            pi = np.ones((self.env.num_states, self.env.num_actions)) / self.env.num_actions
+
+        R = self.env.rewards
+        P = self.env.transition_probs
+
+        P_pi = (P * pi[..., None]).sum(1)
+        P_pi = sym(P_pi)
+        DR = np.linalg.inv(np.diag(np.exp(-R / lambd)) - P_pi)
+
+        return DR.copy()
     
     def SR_top_eigenvector(self, pi=None, gamma=0.99):
         # make symmetric to ensure real eigenvectors and eigenvalues
@@ -126,6 +143,37 @@ class RewardShaper:
         DR = self.compute_DR(pi=pi, lambd=lambd)
         if symmetrize:
             DR = sym(DR)
+        assert (DR >= 0).all()
+
+        DR = arb_mat(DR.tolist())
+        lamb, e = DR.eig(right=True, algorithm="approx", )
+        lamb = np.array(lamb).astype(np.clongdouble).real.flatten()
+        e = np.array(e.tolist()).astype(np.clongdouble).real.astype(np.float32)
+
+        idx = np.flip(lamb.argsort())
+        lamb = lamb[idx]
+        e = e.T[idx]
+        e0 = e[0]
+
+        # assert all entries are positive before taking log
+        if e0[0] < 0:
+            e0 *= -1
+        assert (e0 > 0).all()
+
+        log_e0 = np.log(e0)
+
+        if normalize:
+            log_e0 /= np.sqrt(log_e0 @ log_e0)
+            assert np.isclose(log_e0 @ log_e0, 1.0)
+
+        return log_e0
+
+    
+    def DR_top_log_eigenvector_2(self, pi=None, lambd=1.0, normalize=True, symmetrize=True):
+        """
+        Compute log of the top eigenvector of the DR.
+        """
+        DR = self.compute_DR_2(pi=pi, lambd=lambd)
         assert (DR >= 0).all()
 
         DR = arb_mat(DR.tolist())

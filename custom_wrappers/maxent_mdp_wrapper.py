@@ -106,7 +106,8 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
               self.transition_probs[s1, a, s1] = 1.
 
             # set reward to very tiny negative
-            self.rewards[s1] = goal_absorbing_reward
+            self.rewards[s1] = goal_absorbing_reward 
+            self.reward_grid[x, y] = goal_absorbing_reward
 
           continue
 
