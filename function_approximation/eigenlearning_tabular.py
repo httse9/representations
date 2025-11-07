@@ -33,12 +33,15 @@ def eigenlearning_tabular(args, env):
 
     # learner = DRLearner(env, dataset, lambd=args.lambd)
     # learner = AWGLLearner(env, dataset, lambd=args.lambd)
-    learner = WGLLearner(env, dataset, lambd=args.lambd)
+    # learner = WGLLearner(env, dataset, lambd=args.lambd)
     # learner = AWTLearner(env, dataset, lambd=args.lambd)
-    # learner = WTLearner(env, dataset, lambd=args.lambd)
+    learner = WTLearner(env, dataset, lambd=args.lambd)
     learner.init_learn()
 
-    print(learner.true_eigvec)
+    print(learner.true_eigvec[env.terminal_idx[0]])
+
+    print(np.exp(learner.true_eigvec)[env.terminal_idx[0]])
+
     visualizer.visualize_shaping_reward_2d(learner.true_eigvec, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
     plt.show()
     quit()

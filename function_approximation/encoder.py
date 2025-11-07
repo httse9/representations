@@ -59,7 +59,7 @@ class DR_Encoder(nnx.Module):
     outpus the log of the top eigenvector
     """
     def __init__(self, obs_dim: int, feat_dim: int, eig_dim: int, duals_initial_val: float, barrier_initial_val: float, 
-                obs_type: str, rngs: nnx.Rngs): 
+                obs_type: str, rngs: nnx.Rngs, cnn_out_dim=16): 
 
         self.obs_type = obs_type
         self.barrier_coefs = barrier_initial_val
@@ -79,7 +79,7 @@ class DR_Encoder(nnx.Module):
             ])
             
             # todo - find a neat way to do this
-            self.reshaper_linear = nnx.Linear(16, obs_dim, rngs=rngs)
+            self.reshaper_linear = nnx.Linear(cnn_out_dim, obs_dim, rngs=rngs)
             
                 
         self.eig_linear = nnx.Sequential(*[
@@ -98,7 +98,7 @@ class DR_Encoder(nnx.Module):
     def __call__(self, obs):
         if self.obs_type == 'image':
             
-            print(type(obs))
+            # print(type(obs))
 
             obs = self.eig_conv(obs)
             obs = jnp.reshape(obs, (obs.shape[0], -1)) # flatten it

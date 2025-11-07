@@ -28,8 +28,6 @@ class WTLearner(EigenLearner):
 
         idx = lamb.argsort()
         lamb = lamb[idx]
-        print(lamb)
-        quit()
         e = e.T[idx]
         e0 = e[0]
 

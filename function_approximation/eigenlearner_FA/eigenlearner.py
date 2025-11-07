@@ -62,7 +62,13 @@ class EigenLearner:
 
         rngs = nnx.Rngs(self.args.seed)
 
-        self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs)
+        if self.args.obs_type == "image":
+            dummy_encoder =  DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs)
+            dim = dummy_encoder.eig_conv(self.test_set[0:1]).reshape(1, -1).shape[1]
+            self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs, cnn_out_dim=dim)
+        else:
+            self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs)
+
 
     def init_optimizer(self):
         step_size_schedule = optax.linear_schedule(
