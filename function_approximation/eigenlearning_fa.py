@@ -38,6 +38,10 @@ def get_learner(matrix):
         return WTLearner
     elif matrix == 'DR':
         return DRLearner
+    elif matrix == "WGLNA":
+        return WGLNALearner
+    elif matrix =="WGL_ALLO":
+        return WGLALLOLearner
     else:
         raise NotImplementedError()
 
@@ -54,9 +58,9 @@ def eigenlearning_tabular(args, env):
     learner = get_learner(args.matrix)(env, dataset, test_set, args)
     learner.init_learn()
 
-    ### visualize true eigvec
-    # print(learner.true_eigvec)
-    # visualizer.visualize_shaping_reward_2d(learner.true_eigvec, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+    # ## visualize true eigvec
+    # print(learner.true_eigvec.sum(1))
+    # visualizer.visualize_shaping_reward_2d(learner.true_eigvec[3], ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
     # plt.show()
     # quit()
 
@@ -84,7 +88,13 @@ def eigenlearning_tabular(args, env):
 
     ### save plots
     plt.axhline(1.0, linestyle="--", color='k')
-    plt.plot(learner.cos_sims)
+    if args.eig_dim > 1:
+        cos_sims = np.array(learner.cos_sims)
+        for i in range(args.eig_dim):
+            plt.plot(cos_sims[:, i], label=f"dim {i + 1}")
+        plt.legend()
+    else:
+        plt.plot(learner.cos_sims)
     plt.xlabel("Time Steps (x100)")
     plt.ylabel("Cosine Similarity")
     plt.tight_layout()
@@ -100,12 +110,14 @@ def eigenlearning_tabular(args, env):
     plt.clf()
 
     eigvec_pred = learner.eigvec()  # predicted eigenvector
-    plt.subplot(1, 2, 1)
-    visualizer.visualize_shaping_reward_2d(learner.true_eigvec, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
-    plt.title("True Eigvec")
-    plt.subplot(1, 2, 2)
-    visualizer.visualize_shaping_reward_2d(eigvec_pred, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
-    plt.title("Learned Eigvec")
+    plt.figure(figsize=(2 * args.eig_dim, 4))
+    for i in range(args.eig_dim):
+        plt.subplot(2, args.eig_dim, i + 1)
+        visualizer.visualize_shaping_reward_2d(learner.true_eigvec[:, i], ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+
+        plt.subplot(2, args.eig_dim, i + 1 + args.eig_dim)
+        visualizer.visualize_shaping_reward_2d(eigvec_pred[:, i], ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+
     plt.tight_layout()
     plt.savefig(join(plot_path, f"{run_name}_eigvec.png"))
     plt.clf()
@@ -139,6 +151,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--n_epochs", type=int, default=10000)
     parser.add_argument("--log_interval", default=100, type=int, help="interval to compute cosine similarity")
+
+    parser.add_argument("--eig_dim", type=int, default=1, help="How many dimension of laplacian representation to learn")
 
     parser.add_argument("--save_model", action="store_true", help="Whether to save trained network.")
 

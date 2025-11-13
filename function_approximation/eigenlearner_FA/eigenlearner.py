@@ -58,16 +58,16 @@ class EigenLearner:
             obs_dim = 256
             feat_dim = 256
 
-        eig_dim = 1
+        eig_dim = self.args.eig_dim
 
         rngs = nnx.Rngs(self.args.seed)
 
         if self.args.obs_type == "image":
-            dummy_encoder =  DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs)
+            dummy_encoder =  DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 1, self.args.obs_type, rngs)
             dim = dummy_encoder.eig_conv(self.test_set[0:1]).reshape(1, -1).shape[1]
-            self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs, cnn_out_dim=dim)
+            self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 1, self.args.obs_type, rngs, cnn_out_dim=dim)
         else:
-            self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 0.5, self.args.obs_type, rngs)
+            self.encoder = DR_Encoder(obs_dim, feat_dim, eig_dim, 0, 1, self.args.obs_type, rngs)
 
 
     def init_optimizer(self):
@@ -115,11 +115,10 @@ class EigenLearner:
         return compute_cos_sim(eigvec, self.true_eigvec)
 
 
-
     def learn(self):
         
         eigvec = self.eigvec()
-        self.norms.append((eigvec ** 2).sum())
+        self.norms.append((eigvec ** 2).sum(0).mean())
         self.cos_sims.append(self.cos_sim(eigvec))
 
         for i in range(self.args.n_epochs):
@@ -128,7 +127,7 @@ class EigenLearner:
 
             if (i + 1) % self.args.log_interval == 0:
                 eigvec = self.eigvec()
-                self.norms.append((eigvec ** 2).sum())
+                self.norms.append((eigvec ** 2).sum(0).mean())
                 self.cos_sims.append(self.cos_sim(eigvec))
 
                 print(self.cos_sims[-1])

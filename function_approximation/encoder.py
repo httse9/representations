@@ -97,8 +97,6 @@ class DR_Encoder(nnx.Module):
 
     def __call__(self, obs):
         if self.obs_type == 'image':
-            
-            # print(type(obs))
 
             obs = self.eig_conv(obs)
             obs = jnp.reshape(obs, (obs.shape[0], -1)) # flatten it
