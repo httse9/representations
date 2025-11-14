@@ -40,8 +40,6 @@ def eigenlearning_tabular(args, env):
 
     print(learner.true_eigvec)
 
-    print(np.exp(learner.true_eigvec))
-
     visualizer.visualize_shaping_reward_2d(learner.true_eigvec, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
     plt.show()
     quit()

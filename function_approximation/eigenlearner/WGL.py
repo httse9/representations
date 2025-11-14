@@ -13,6 +13,44 @@ class WGLLearner(EigenLearner):
     def __init__(self, env, dataset, lambd=1.0):
 
         super().__init__(env, dataset, lambd=lambd)
+
+
+        """
+        TODO: Test different formulation of M matrix
+        - M is diagonal. M^{-1} should be non-negative
+        - M must be positive.
+        - Higher rewards should correspond to smaller value in M
+        0) M = exp(diag(-r)) ensures between 0 and 1
+        1) M = diag(-r), dividing by a constant does not affect eigenvectors
+        """
+        r = self.env.rewards 
+
+        ### M = diag(-r)
+        self.R = np.diag((-r) ** (1/self.lambd))
+
+
+
+
+        self.R_inv = np.linalg.inv(self.R)
+        self.R_inv_sqrt = np.sqrt(self.R_inv)
+
+
+        # r -= r.min()
+        # r += 1
+        # r /= r.max()
+
+        # self.R = np.diag(r)
+        # self.R_inv_sqrt = np.sqrt(np.linalg.inv(self.R))
+
+        # print(self.R_inv)
+
+
+        # print(self.R_inv_sqrt)
+
+        # print(self.R_inv_sqrt.min(), self.R_inv.max())
+
+
+        
         
     def init_learn(self):
         super().init_learn()
