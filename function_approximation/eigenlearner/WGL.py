@@ -23,31 +23,12 @@ class WGLLearner(EigenLearner):
         0) M = exp(diag(-r)) ensures between 0 and 1
         1) M = diag(-r), dividing by a constant does not affect eigenvectors
         """
-        r = self.env.rewards 
-
+        
         ### M = diag(-r)
-        self.R = np.diag((-r) ** (1/self.lambd))
-
-
-
-
-        self.R_inv = np.linalg.inv(self.R)
-        self.R_inv_sqrt = np.sqrt(self.R_inv)
-
-
-        # r -= r.min()
-        # r += 1
-        # r /= r.max()
-
-        # self.R = np.diag(r)
-        # self.R_inv_sqrt = np.sqrt(np.linalg.inv(self.R))
-
-        # print(self.R_inv)
-
-
-        # print(self.R_inv_sqrt)
-
-        # print(self.R_inv_sqrt.min(), self.R_inv.max())
+        # r = self.env.rewards 
+        # self.R = np.diag((-r) ** (1/self.lambd))
+        # self.R_inv = np.linalg.inv(self.R)
+        # self.R_inv_sqrt = np.sqrt(self.R_inv)
 
 
         
