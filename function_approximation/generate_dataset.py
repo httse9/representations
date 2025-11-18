@@ -25,18 +25,7 @@ import pickle
 from os.path import join
 from copy import deepcopy
 
-"""
-TODO:
-1. Figure out a way to record all types of observation at once, so no need to generate separately (done)
-2. Agent-Env Loop & record transitions
-  - how to do random starts?
-"""
-
 def generate_dataset(env, N):
-    """
-    TODO:
-    1. generate N samples in total
-    """
 
     dataset = {
         "onehot": [],
@@ -44,43 +33,21 @@ def generate_dataset(env, N):
         "image": []
     }
 
-
-    count = 0
-    while True:
+    for _ in range(N):
 
         s = env.reset()     # samples a random start state
         one_hot, coordinates, image = get_observations(env, s)
 
-        done = False
-        while not done:
+        a = np.random.choice(env.num_actions)
+        ns, r, done, d = env.step(a)
+        nr = env.reward()
+        terminated = float(ns['state'] in env.terminal_idx)
 
-            """
-            NOTE:
-            We use done here since for large environments, it could be extremely difficult to get to terminal state
-            Done also has truncation after some steps.
-            I think truncation step is in the env spec files in /reward_env
-            """
+        one_hot_next, coordinates_next, image_next = get_observations(env, ns)
 
-            a = np.random.choice(env.num_actions)
-            ns, r, done, d = env.step(a)
-            nr = env.reward()
-            terminated = float(ns['state'] in env.terminal_idx)
-
-            one_hot_next, coordinates_next, image_next = get_observations(env, ns)
-
-            dataset['onehot'].append([one_hot, a, r, one_hot_next, nr, terminated])
-            dataset['coordinates'].append([coordinates, a, r, coordinates_next, nr, terminated])
-            dataset['image'].append([image, a, r, image_next, nr, terminated])
-
-            s = ns
-            one_hot, coordinates, image = one_hot_next, coordinates_next, image_next
-
-            count += 1
-            if count >= N:
-                break
-
-        if count >= N:
-            break
+        dataset['onehot'].append([one_hot, a, r, one_hot_next, nr, terminated])
+        dataset['coordinates'].append([coordinates, a, r, coordinates_next, nr, terminated])
+        dataset['image'].append([image, a, r, image_next, nr, terminated])
 
     return dataset
 
