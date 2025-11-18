@@ -79,18 +79,16 @@ def eigenlearning(args, env):
     plt.xlabel("Time Steps (x100)")
     plt.ylabel("Cosine Similarity")
     plt.tight_layout()
-    plt.show()
-    # plt.savefig(join(plot_path, f"{run_name}_cossim.png"))
-    # plt.clf()
+    plt.savefig(join(plot_path, f"{run_name}_cossim.png"))
+    plt.clf()
 
     plt.axhline(env.num_states, linestyle="--", color="k")
     plt.plot(learner.norms)
     plt.xlabel("Time Steps (x100)")
     plt.ylabel("Eigvec Norm")
     plt.tight_layout()
-    plt.show()
-    # plt.savefig(join(plot_path, f"{run_name}_eigvec-norm.png"))
-    # plt.clf()
+    plt.savefig(join(plot_path, f"{run_name}_eigvec-norm.png"))
+    plt.clf()
 
     eigvec_pred = learner.eigvec()  # predicted eigenvector
     plt.figure(figsize=(2 * args.eig_dim, 4))
@@ -102,11 +100,9 @@ def eigenlearning(args, env):
         visualizer.visualize_shaping_reward_2d(eigvec_pred[:, i], ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
 
     plt.tight_layout()
-    plt.show()
-    # plt.savefig(join(plot_path, f"{run_name}_eigvec.png"))
-    # plt.clf()
+    plt.savefig(join(plot_path, f"{run_name}_eigvec.png"))
+    plt.clf()
 
-    quit()
 
     ### save raw data
     data = dict(
@@ -135,7 +131,7 @@ if __name__ == "__main__":
     parser.add_argument("--grad_norm_clip", default=0.5, type=float, help="Ending step size")
 
     parser.add_argument("--n_epochs", type=int, default=400, help="Number of passes thru dataset")
-    parser.add_argument("--batch_size", default=400, help="Batch size", type=int)
+    parser.add_argument("--batch_size", default=250, help="Batch size", type=int)
     parser.add_argument("--log_interval", default=100, type=int, help="interval to compute cosine similarity")
 
     parser.add_argument("--eig_dim", type=int, default=1, help="How many dimension of laplacian representation to learn")

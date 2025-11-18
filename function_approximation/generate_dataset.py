@@ -93,7 +93,7 @@ def get_observations(env, s):
     one_hot = onehot(env.num_states, s['state'])
 
     x, y = env.agent_pos
-    coordinates = np.array([x / (env.width - 1), y / (env.height - 1)])
+    coordinates = np.array([x / (env.width - 1), y / (env.height - 1)]) - 0.5
 
     image = env.custom_rgb()
 
