@@ -26,8 +26,8 @@ def load_dataset(args):
     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
         dataset = pickle.load(f)[args.obs_type]
 
-    with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_test.pkl", "rb") as f:
-        test_set = jnp.array(pickle.load(f))
+    with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
+        test_set = jnp.array(pickle.load(f))[args.obs_type]
 
     return dataset, test_set
 
