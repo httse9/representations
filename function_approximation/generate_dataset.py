@@ -84,6 +84,32 @@ def generate_dataset(env, N):
 
     return dataset
 
+def create_test_set(env):
+    """
+    Create a dataset consisting of all states/observations in an environment
+    For testing the learned eigenvector
+    """
+
+    dataset = {
+        "onehot": [],
+        "coordinates": [],
+        "image": []
+    }
+    
+    # enumerate over all states
+    for s in range(env.num_states):
+
+        env.reset()
+        x, y = env.state_to_pos[s]
+        # set start position to s
+        env.unwrapped.agent_pos = [x, y]
+
+        dataset['onehot'].append(onehot(env.num_states, s))
+        dataset['coordinates'].append(np.array([x / (env.width - 1), y / (env.height - 1)]) - 0.5)
+        dataset['image'].append(env.custom_rgb())
+
+    return dataset
+
 
 
 def get_observations(env, s):
@@ -133,3 +159,7 @@ if __name__ == "__main__":
     dataset = generate_dataset(env, args.num_transitions)
     with open(join(dataset_path, f"{args.env}_dataset.pkl"), "wb") as f:
         pickle.dump(dataset, f)
+
+    test_set = create_test_set(env)
+    with open(join(dataset_path, f"{args.env}_testset.pkl"), "wb") as f:
+        pickle.dump(test_set, f)
