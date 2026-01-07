@@ -12,6 +12,7 @@ import os
 import subprocess
 import glob
 from minigrid_basics.function_approximation.eigenlearner import *
+from os.path import join
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -25,23 +26,112 @@ def load_dataset(env_name):
         dataset = pickle.load(f)
     return dataset
 
+
+def eigvec_myopic_policy(env, eigvec):
+    """
+    Get the myopic (hill-climbing policy) for current eigenvector
+    """
+    termination = np.zeros((env.num_states))
+    policy = np.zeros((env.num_states))
+
+    for s in range(env.num_states):
+
+        # handle unvisited state / terminal state
+        if s in env.terminal_idx:
+            termination[s] = 1
+            continue
+
+        # for visited states:
+        pos = env.state_to_pos[s]  # (x, y): x-th col, y-th row
+        value = eigvec[s]  # init value
+        myopic_a = -1
+
+        for a, dir_vec in enumerate(np.array([
+            [1, 0], # right
+            [0, 1], # down
+            [-1, 0],    # left
+            [0, -1],    # up
+        ])):
+            neighbor_pos = pos + dir_vec
+            neighbor_state = env.pos_to_state[neighbor_pos[0] + neighbor_pos[1] * env.width]
+            
+            # if neighbor state exists (not wall) 
+            # and neighor state has been visited
+            # and has higher eigenvector value
+            # go to that neighbor state
+            if neighbor_state >= 0 and eigvec[neighbor_state] > value:
+                value = eigvec[neighbor_state]
+                myopic_a = a
+
+        if myopic_a == -1:
+            # no better neighbor, terminate
+            termination[s] = 1
+        else:
+            policy[s] = myopic_a
+
+    myopic_policy = dict(termination=termination, policy=policy)
+    return myopic_policy
+
 def eigenlearning_tabular(args, env):
     
-    dataset = load_dataset(args.env)
+    dataset = []# load_dataset(args.env)
     visualizer = Visualizer(env)
 
+    # visualizer.visualize_env()
+    # plot_dir = "minigrid_basics/function_approximation/plots/choosing_M"
+    # os.makedirs(plot_dir, exist_ok=True)
+    # plt.savefig(join(plot_dir, "env.png"), dpi=300)
+    # plt.show()
 
-    # learner = DRLearner(env, dataset, lambd=args.lambd)
+
+    learner = DRLearner(env, dataset, lambd=args.lambd)
     # learner = AWGLLearner(env, dataset, lambd=args.lambd)
-    learner = WGLLearner(env, dataset, lambd=args.lambd)
+    # learner = WGLLearner(env, dataset, lambd=args.lambd)
     # learner = AWTLearner(env, dataset, lambd=args.lambd)
     # learner = WTLearner(env, dataset, lambd=args.lambd)
     learner.init_learn()
 
-    print(learner.true_eigvec)
+    # lamb = learner.compute_top_eigvec()
+    # print(lamb)
 
-    visualizer.visualize_shaping_reward_2d(learner.true_eigvec, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+    # for e in learner.true_eigvec:
+    #     visualizer.visualize_shaping_reward_2d(e, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+    #     plt.show()
+
+    # eigvec = learner.true_eigvec[1:]
+    # eigvec = eigvec * (1 / np.sqrt(lamb[1:])).reshape(-1, 1)
+    # eigvec = eigvec - eigvec[:, env.terminal_idx[0]: env.terminal_idx[0] + 1]
+    # eigvec = -(eigvec ** 2).sum(0)
+
+    eigvec = learner.true_eigvec
+    # eigvec /= np.linalg.norm(eigvec)
+    print(eigvec, eigvec[env.terminal_idx[0]])
+    print(np.exp(eigvec), np.exp(eigvec)[env.terminal_idx[0]])
+    # plt.plot(eigvec)
+    # eigvec = learner.R_inv_sqrt @ eigvec
+    # eigvec /= np.linalg.norm(eigvec)
+    # print(eigvec)
+    # plt.plot(eigvec)
+    # plt.show()
+
+    # learner = AWGLLearner(env, dataset, lambd = args.lambd)
+    # learner.init_learn()
+    # print(learner.true_eigvec)
+    # print(eigvec @ learner.true_eigvec / (np.linalg.norm(eigvec) * np.linalg.norm(learner.true_eigvec)))
+
+    # plt.clf()
+    # plt.hist(learner.true_eigvec)
+    # plt.show()
+
+    visualizer.visualize_shaping_reward_2d(eigvec, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+    # plt.savefig(join(plot_dir, "increasing.png"), dpi=300)
     plt.show()
+
+
+    mp = eigvec_myopic_policy(env, eigvec)
+    visualizer.visualize_option_with_env_reward(mp)
+    plt.show()
+
     quit()
 
     learner.learn(n_epochs=args.n_epochs, step_size=args.step_size)
@@ -75,7 +165,7 @@ if __name__ == "__main__":
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{args.env}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
     env = gym.make(env_id, disable_env_checker=True)
-    env = maxent_mdp_wrapper.MDPWrapper(env, goal_absorbing=True)
+    env = maxent_mdp_wrapper.MDPWrapper(env, goal_absorbing=True,goal_absorbing_reward=-0.001)
 
     # learn
     cmap = "rainbow"

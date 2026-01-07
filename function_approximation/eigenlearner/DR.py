@@ -19,6 +19,7 @@ class DRLearner(EigenLearner):
         """
         Compute top log eigenvector of DR
         """
+
         matrix = arb_mat(self.matrix.tolist())
         lamb, e = matrix.eig(right=True, algorithm="approx")
         lamb = np.array(lamb).astype(np.clongdouble).real.flatten()
@@ -26,13 +27,13 @@ class DRLearner(EigenLearner):
 
         idx = np.flip(lamb.argsort())
         lamb = lamb[idx]
-        print(lamb)
+        # print(lamb)
         e = e.T[idx]
         e0 = e[0]
 
         if e0[0] < 0:
             e0 *= -1
-        print(e0)
+        # print(e0)
         assert (e0 > 0).all()
 
         log_e0 = np.log(e0)

@@ -52,7 +52,7 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
   """Wrapper to provide access to the MDP objects (namely, `transition_probs` and `rewards`).
   """
 
-  def __init__(self, env, tile_size=8, get_rgb=False, goal_absorbing=False, goal_absorbing_reward=-1e-3):
+  def __init__(self, env, tile_size=8, get_rgb=False, goal_absorbing=False, goal_absorbing_reward=0):
     """
     goal_absorbing: whether the goal states are absorbing. If True, goal state
       transition to itself with prob 1. If False, goal state transition to 
@@ -105,7 +105,7 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
             for a in range(self.num_actions):
               self.transition_probs[s1, a, s1] = 1.
 
-            # set reward to very tiny negative
+            # set reward to 0 or very tiny negative for the corrected DR
             self.rewards[s1] = goal_absorbing_reward 
             self.reward_grid[x, y] = goal_absorbing_reward
 

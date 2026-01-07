@@ -30,6 +30,36 @@ class WGLLearner(EigenLearner):
         # self.R_inv = np.linalg.inv(self.R)
         # self.R_inv_sqrt = np.sqrt(self.R_inv)
 
+        ### Flip sign of r
+        # r = -self.env.rewards
+        # self.R = np.diag(np.exp(-r / lambd))             # R as defined in the DR paper.
+        # self.R_inv = np.diag(np.exp(r / lambd))         # R^(-1)
+        # self.R_inv_sqrt = np.diag(np.exp(r / lambd / 2))         # R^(-1/2)
+
+        ### diffused r
+        # r = self.env.rewards
+        # r = np.linalg.matrix_power(self.P, 50) @ r
+        # self.R = np.diag(np.exp(-r / lambd))             # R as defined in the DR paper.
+        # self.R_inv = np.diag(np.exp(r / lambd))         # R^(-1)
+        # self.R_inv_sqrt = np.diag(np.exp(r / lambd / 2))         # R^(-1/2)
+
+
+        ## Interesting, but similar to exp
+        # r = np.exp(- self.env.rewards)
+        # r_inv = 1 / r
+
+        # # r_inv = (self.env.rewards + 21) / 21
+        # # r = 1 / r_inv
+
+        # a = 0.9
+        # r_inv = r_inv * (1-a) + a #- 0.2
+
+        # # r_inv = (r_inv > 0.01) * r_inv
+
+        # print(r_inv.min(), r_inv.max())
+        # self.R = np.diag(r)             # R as defined in the DR paper.
+        # self.R_inv = np.diag(r_inv)         # R^(-1)
+        # self.R_inv_sqrt = np.diag(r_inv)         # R^(-1/2)
 
         
         
@@ -46,7 +76,7 @@ class WGLLearner(EigenLearner):
     
     def compute_top_eigvec(self):
         """
-        Compute top log eigenvector of DR
+        Compute top log eigenvector of WGL
         """
         matrix = arb_mat(self.matrix.tolist())
         lamb, e = matrix.eig(right=True, algorithm="approx")

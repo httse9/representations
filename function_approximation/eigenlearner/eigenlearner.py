@@ -20,6 +20,13 @@ class EigenLearner:
         self.R_inv = np.diag(np.exp(r / lambd))         # R^(-1)
         self.R_inv_sqrt = np.diag(np.exp(r / lambd / 2))         # R^(-1/2)
 
+        # self.L = np.eye(self.env.num_states) - self.P
+        # lamb, e = np.linalg.eig(self.L)
+        # idx = lamb.argsort()
+        # lamb = lamb[idx]
+        # print("Here", lamb)
+        
+
         
     def init_learn(self):
         self.compute_matrix()

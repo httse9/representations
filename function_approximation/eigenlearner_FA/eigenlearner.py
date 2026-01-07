@@ -77,11 +77,16 @@ class EigenLearner:
             transition_steps=self.args.n_epochs
         )
 
+        if self.args.optimizer == "adam":
+            opt = optax.adam
+        elif self.args.optimizer == "rmsprop":
+            opt = optax.rmsprop
+
         self.optimizer = nnx.Optimizer(
             self.encoder,
             optax.chain(
                 optax.clip_by_global_norm(self.args.grad_norm_clip),
-                optax.adam(step_size_schedule)
+                opt(step_size_schedule)
             )
         )
 

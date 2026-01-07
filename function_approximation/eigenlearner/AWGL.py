@@ -42,7 +42,7 @@ class AWGLLearner(EigenLearner):
 
         idx = lamb.argsort()
         lamb = lamb[idx]
-        print(lamb)
+        # print(lamb)
         e = e.T[idx]
         e0 = e[1]
 
