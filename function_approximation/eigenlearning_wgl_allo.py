@@ -27,7 +27,7 @@ def load_dataset(args):
         dataset = pickle.load(f)[args.obs_type]
 
     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
-        test_set = jnp.array(pickle.load(f))[args.obs_type]
+        test_set = jnp.array(pickle.load(f)[args.obs_type])
 
     return dataset, test_set
 
@@ -135,6 +135,8 @@ if __name__ == "__main__":
     parser.add_argument("--log_interval", default=100, type=int, help="interval to compute cosine similarity")
 
     parser.add_argument("--eig_dim", type=int, default=1, help="How many dimension of laplacian representation to learn")
+    parser.add_argument("--barrier", type=float, default=1, help="Barrier coefficient b")
+
 
     parser.add_argument("--save_model", action="store_true", help="Whether to save trained network.")
 
@@ -157,7 +159,7 @@ if __name__ == "__main__":
     data_path = join(path, "data")
     os.makedirs(plot_path, exist_ok=True)
     os.makedirs(data_path, exist_ok=True)
-    run_name = f"{args.lambd}-{args.step_size_start}-{args.step_size_end}-{args.grad_norm_clip}-{args.seed}"
+    run_name = f"{args.lambd}-{args.step_size_start}-{args.step_size_end}-{args.batch_size}-{args.barrier}-{args.seed}"
 
     # learn
     eigenlearning(args, env)

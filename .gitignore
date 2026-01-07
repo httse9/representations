@@ -169,3 +169,5 @@ SR_ROD/
 **/eigvec_learning
 **/dataset
 **/experiments_test
+**/experiments_test_old
+**/experiments_test_old_newer
