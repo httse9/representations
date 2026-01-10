@@ -89,17 +89,28 @@ class DR_Encoder(nnx.Module):
                 nnx.Linear(feat_dim, eig_dim, rngs=rngs)
             ])
             
-            
-                
-        self.eig_linear = nnx.Sequential(*[
-            nnx.Linear(obs_dim, feat_dim, rngs=rngs),
-            nnx.relu,
-            nnx.Linear(feat_dim, feat_dim, rngs=rngs),
-            nnx.relu,
-            nnx.Linear(feat_dim, feat_dim, rngs=rngs),
-            nnx.relu,
-            nnx.Linear(feat_dim, eig_dim, rngs=rngs, use_bias=True),
-        ])
+        if self.obs_type == "onehot":
+            self.eig_linear = nnx.Sequential(*[
+                nnx.Linear(obs_dim, feat_dim, rngs=rngs),
+                nnx.relu,
+                nnx.Linear(feat_dim, feat_dim, rngs=rngs),
+                nnx.relu,
+                nnx.Linear(feat_dim, feat_dim, rngs=rngs),
+                nnx.relu,
+                nnx.Linear(feat_dim, eig_dim, rngs=rngs, use_bias=True),
+            ])
+        elif self.obs_type == "coordinates":
+            self.eig_linear = nnx.Sequential(*[
+                nnx.Linear(obs_dim, feat_dim, rngs=rngs),
+                nnx.relu,
+                nnx.Linear(feat_dim, feat_dim, rngs=rngs),
+                nnx.relu,
+                nnx.Linear(feat_dim, feat_dim, rngs=rngs),
+                nnx.relu,
+                nnx.Linear(feat_dim, feat_dim, rngs=rngs),
+                nnx.relu,
+                nnx.Linear(feat_dim, eig_dim, rngs=rngs, use_bias=True),
+            ])
         
         self.duals = nnx.Param(jnp.tril(duals_initial_val * jnp.ones((eig_dim, eig_dim))))
 
