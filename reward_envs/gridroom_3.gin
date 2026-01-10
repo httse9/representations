@@ -1,5 +1,5 @@
 # Empty environment
-maxent_mon_minigrid.register_environment.env_id = 'MiniGrid-MaxEntGridRoom2-v0'
+maxent_mon_minigrid.register_environment.env_id = 'MiniGrid-MaxEntGridRoom3-v0'
 
 MaxEntMonMiniGridEnv.directional = True
 MaxEntMonMiniGridEnv.agent_pos = None

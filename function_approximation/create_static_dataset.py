@@ -46,7 +46,7 @@ def create_dataset(env, obs_type):
             curr_s = np.array([x / env.width, y / env.height]) - 0.5
             assert (curr_s <= 1).all()
         elif obs_type == "image":
-            curr_s = env.custom_rgb()
+            curr_s = env.custom_rgb() - 0.5
         elif obs_type == "state_num":
             curr_s = s
 
@@ -72,7 +72,7 @@ def create_dataset(env, obs_type):
                     next_s = np.array([next_x / env.width, next_y / env.height]) - 0.5
                     assert (next_s <= 1).all()
                 elif obs_type == "image":
-                    next_s = env.custom_rgb()
+                    next_s = env.custom_rgb() - 0.5
                 elif obs_type == "state_num":
                     next_s = ns['state']
 
@@ -110,7 +110,7 @@ def create_dataset_2(env, obs_type):
             curr_s = np.array([x / env.width, y / env.height]) - 0.5
             assert (curr_s <= 1).all()
         elif obs_type == "image":
-            curr_s = env.custom_rgb()
+            curr_s = env.custom_rgb() - 0.5
         elif obs_type == "state_num":
             curr_s = s
 
@@ -128,7 +128,7 @@ def create_dataset_2(env, obs_type):
                 next_s = np.array([next_x / env.width, next_y / env.height]) - 0.5
                 assert (next_s <= 1).all()
             elif obs_type == "image":
-                next_s = env.custom_rgb()
+                next_s = env.custom_rgb() - 0.5
             elif obs_type == "state_num":
                 next_s = ns['state']
 
@@ -161,7 +161,7 @@ def create_test_set(env, obs_type):
             curr_s = np.array([x / env.width, y / env.height]) - 0.5
             assert (curr_s <= 1).all()
         elif obs_type == "image":
-            curr_s = env.custom_rgb()
+            curr_s = env.custom_rgb() - 0.5
         elif obs_type == "state_num":
             curr_s = s
 

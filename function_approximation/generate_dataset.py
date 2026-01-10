@@ -73,7 +73,7 @@ def create_test_set(env):
 
         dataset['onehot'].append(onehot(env.num_states, s))
         dataset['coordinates'].append(np.array([x / (env.width - 1), y / (env.height - 1)]) - 0.5)
-        dataset['image'].append(env.custom_rgb())
+        dataset['image'].append(env.custom_rgb() - 0.5)
 
     return dataset
 
@@ -88,7 +88,7 @@ def get_observations(env, s):
     x, y = env.agent_pos
     coordinates = np.array([x / (env.width - 1), y / (env.height - 1)]) - 0.5
 
-    image = env.custom_rgb()
+    image = env.custom_rgb() - 0.5
 
     return one_hot, coordinates, image
 
