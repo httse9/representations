@@ -81,11 +81,17 @@ class DR_NORM_Learner(EigenLearner):
         self.norms.append((jnp.exp(eigvec) ** 2).sum(0).mean())
         self.cos_sims.append(self.cos_sim(eigvec))
 
+        wandb.log({
+            "train/cosine_similarity": self.cos_sims[-1], 
+            "train/norm": self.norms[-1],
+            "train/epoch": 0 # Adjust x-axis
+        })
+
         key = random.key(self.args.seed)
 
         update_count = 0
 
-        for _ in range(self.args.n_epochs):
+        for e in range(self.args.n_epochs):
 
             key, subkey = random.split(key)
             batches = get_batches(self.args.batch_size, subkey, *self.processed_dataset)
@@ -102,18 +108,18 @@ class DR_NORM_Learner(EigenLearner):
                 update_count += 1
 
                 
-                if update_count % self.args.log_interval == 0:
-                    eigvec = self.eigvec()
-                    self.norms.append((jnp.exp(eigvec) ** 2).sum(0).mean())
-                    self.cos_sims.append(self.cos_sim(eigvec))
+                # if update_count % self.args.log_interval == 0:
+            eigvec = self.eigvec()
+            self.norms.append((jnp.exp(eigvec) ** 2).sum(0).mean())
+            self.cos_sims.append(self.cos_sim(eigvec))
 
-                    print(self.cos_sims[-1],  self.encoder.duals[0][0])
+            print(self.cos_sims[-1],  self.encoder.duals[0][0])
 
-                    wandb.log({
-                        "train/cosine_similarity": self.cos_sims[-1], 
-                        "train/norm": self.norms[-1],
-                        "train/step": update_count # Adjust x-axis
-                    })
+            wandb.log({
+                "train/cosine_similarity": self.cos_sims[-1], 
+                "train/norm": self.norms[-1],
+                "train/epoch": e + 1 # Adjust x-axis
+            })
     
 
 

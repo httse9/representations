@@ -189,9 +189,6 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
-    print("HEREEEEE")
-    print(args)
-
     if args.step_size_end is None:
         args.step_size_end = args.step_size_start
 
@@ -223,7 +220,7 @@ if __name__ == "__main__":
         job_type="train",
         name=run_name, 
     )
-    run.define_metric("train/*", step_metric="train/step")
+    run.define_metric("train/*", step_metric="train/epoch")
 
     # learn
     eigenlearning(args, env)

@@ -77,9 +77,6 @@ class EigenLearner:
             transition_steps=self.args.n_epochs
         )
 
-        print("HERE", self.args.optimizer)
-        print(">>>>>>>")
-
         if self.args.optimizer == "adam":
             opt = optax.adam
         elif self.args.optimizer == "rmsprop":
