@@ -189,6 +189,9 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
+    print("HEREEEEE")
+    print(args)
+
     if args.step_size_end is None:
         args.step_size_end = args.step_size_start
 
@@ -210,7 +213,7 @@ if __name__ == "__main__":
     os.makedirs(plot_path, exist_ok=True)
     os.makedirs(data_path, exist_ok=True)
 
-    group_name = f"{args.lambd}-{args.step_size_start}-{args.step_size_end}-{args.batch_size}-{args.barrier}-{args.optimizer}-{args.dr_mode}"
+    group_name = f"{args.lambd}-{args.step_size_start}-{args.step_size_end}-{args.batch_size}-{args.barrier}-{args.optimizer}-{args.dr_mode}-{args.grad_norm_clip}"
     run_name = group_name + f"-{args.seed}"
 
     run = wandb.init(
