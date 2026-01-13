@@ -17,14 +17,17 @@ from minigrid_basics.function_approximation.eigenlearner_FA import *
 import wandb
 
 learners = {
-    "dr": DRLearner,
+    "dr_anchor": DRLearner,
     "dr_norm": DR_NORM_Learner
 }
 
 def eigenlearning(args, env):
 
     ### load dataset
-    dataset, test_set = load_dataset(args)
+    if args.dataset == "static":
+        dataset, test_set = load_static_dataset(args)
+    elif args.dataset == "real":
+        dataset, test_set = load_dataset(args)
 
      ### for visualizing eigvec
     visualizer = Visualizer(env)
@@ -126,8 +129,8 @@ def eigvec_myopic_policy(env, eigvec):
     return myopic_policy
 
 ### Ground-truth small dataset
-def load_dataset(args):
-    if args.dr_mode == "dr":
+def load_static_dataset(args):
+    if args.dr_mode == "dr_anchor":
         with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_2.pkl", "rb") as f:
             dataset = pickle.load(f)
     elif args.dr_mode == "dr_norm":
@@ -139,15 +142,19 @@ def load_dataset(args):
 
     return dataset, test_set
 
-# ### Actual dataset used in paper
-# def load_dataset(args):
-#     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
-#         dataset = pickle.load(f)[args.obs_type]
+### Actual dataset used in paper
+def load_dataset(args):
 
-#     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
-#         test_set = jnp.array(pickle.load(f)[args.obs_type])
+    if args.dr_mode == "dr_norm":
+        raise NotImplementedError()
 
-#     return dataset, test_set
+    with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
+        dataset = pickle.load(f)[args.obs_type]
+
+    with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
+        test_set = jnp.array(pickle.load(f)[args.obs_type])
+
+    return dataset, test_set
 
 
 
@@ -160,6 +167,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", default="fourrooms_2", type=str, help="Specify environment.")
     parser.add_argument("--obs_type", default="onehot", type=str)
+    parser.add_argument("--dataset", default="static", type=str)
+
+    parser.add_argument("--dr_mode", type=str, default="dr_anchor")
+    parser.add_argument("--optimizer", default="rmsprop", type=str)
     
     parser.add_argument("--lambd", help="lambda for DR", default=20.0, type=float)
     parser.add_argument("--step_size_start", default=1e-4, type=float, help="Starting step size")
@@ -171,20 +182,18 @@ if __name__ == "__main__":
     parser.add_argument("--log_interval", default=100, type=int, help="interval to compute cosine similarity")
 
     parser.add_argument("--eig_dim", type=int, default=1, help="How many dimension of laplacian representation to learn")
-    parser.add_argument("--barrier", type=float, default=0.5, help="Barrier coefficient b")
-
+    parser.add_argument("--barrier", type=float, default=0.5, help="Barrier coefficient b. Not used for anchor")
 
     parser.add_argument("--save_model", action="store_true", help="Whether to save trained network.")
-
-    parser.add_argument("--optimizer", default="rmsprop", type=str)
-
-    parser.add_argument("--dr_mode", type=str, default="dr")
-
+    
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
     if args.step_size_end is None:
         args.step_size_end = args.step_size_start
+
+    if "anchor" in args.dr_mode:
+        args.barrier = 0
 
     # create env
     set_random_seed(args.seed)
@@ -195,7 +204,7 @@ if __name__ == "__main__":
 
 
     # create dir for saving results
-    path = join("minigrid_basics", "function_approximation", f"experiments_{args.dr_mode}", args.env, args.obs_type)
+    path = join("minigrid_basics", "function_approximation", f"experiments_{args.dr_mode}_{args.dataset}", args.env, args.obs_type)
     plot_path = join(path, "plots")
     data_path = join(path, "data")
     os.makedirs(plot_path, exist_ok=True)
@@ -205,7 +214,7 @@ if __name__ == "__main__":
     run_name = group_name + f"-{args.seed}"
 
     run = wandb.init(
-        project=f"minigrid-eigen-dr-{args.env}-{args.obs_type}",
+        project=f"minigrid-eigen-dr-{args.env}-{args.obs_type}-{args.dataset}",
         config=vars(args),
         group=group_name,  
         job_type="train",
