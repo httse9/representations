@@ -13,7 +13,13 @@ import os
 from os.path import join
 import subprocess
 import glob
-from minigrid_basics.function_approximation.eigenlearner_FA.DR import DRLearner
+from minigrid_basics.function_approximation.eigenlearner_FA import *
+import wandb
+
+learners = {
+    "dr": DRLearner,
+    "dr_norm": DR_NORM_Learner
+}
 
 def eigenlearning(args, env):
 
@@ -25,7 +31,7 @@ def eigenlearning(args, env):
     cmap = "rainbow"  
 
     ### init learner
-    learner = DRLearner(env, dataset, test_set, args)
+    learner = learners[args.dr_mode](env, dataset, test_set, args)
     learner.init_learn()
 
     ### learn
@@ -34,21 +40,21 @@ def eigenlearning(args, env):
     eigvec = learner.eigvec()
 
     ### save plots
-    plt.axhline(1.0, linestyle="--", color='k')
-    plt.plot(learner.cos_sims)
-    plt.xlabel("Time Steps (x100)")
-    plt.ylabel("Cosine Similarity")
-    plt.tight_layout()
-    plt.savefig(join(plot_path, f"{run_name}_cossim.png"))
-    plt.clf()
+    # plt.axhline(1.0, linestyle="--", color='k')
+    # plt.plot(learner.cos_sims)
+    # plt.xlabel("Time Steps (x100)")
+    # plt.ylabel("Cosine Similarity")
+    # plt.tight_layout()
+    # plt.savefig(join(plot_path, f"{run_name}_cossim.png"))
+    # plt.clf()
 
-    # plt.axhline(env.num_states, linestyle="--", color="k")
-    plt.plot(learner.norms)
-    plt.xlabel("Time Steps (x100)")
-    plt.ylabel("Eigvec Norm")
-    plt.tight_layout()
-    plt.savefig(join(plot_path, f"{run_name}_eigvec-norm.png"))
-    plt.clf()
+    # # plt.axhline(env.num_states, linestyle="--", color="k")
+    # plt.plot(learner.norms)
+    # plt.xlabel("Time Steps (x100)")
+    # plt.ylabel("Eigvec Norm")
+    # plt.tight_layout()
+    # plt.savefig(join(plot_path, f"{run_name}_eigvec-norm.png"))
+    # plt.clf()
 
     plt.figure(figsize=(9, 3))
     plt.subplot(1, 3, 1)
@@ -60,6 +66,7 @@ def eigenlearning(args, env):
     visualizer.visualize_option_with_env_reward(pi)
     plt.tight_layout()
     plt.savefig(join(plot_path, f"{run_name}_eigvec.png"))
+    wandb.log({"eigvec_vis": wandb.Image(plt)})
     plt.clf()
 
     ### save raw data
@@ -71,7 +78,6 @@ def eigenlearning(args, env):
     )
     with open(join(data_path, f"{run_name}.pkl"), "wb") as f:
         pickle.dump(data, f)
-
 
 
 def eigvec_myopic_policy(env, eigvec):
@@ -120,24 +126,28 @@ def eigvec_myopic_policy(env, eigvec):
     return myopic_policy
 
 ### Ground-truth small dataset
-# def load_dataset(args):
-#     with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_2.pkl", "rb") as f:
-#         dataset = pickle.load(f)
-
-#     with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_test.pkl", "rb") as f:
-#         test_set = jnp.array(pickle.load(f))
-
-#     return dataset, test_set
-
-### Actual dataset used in paper
 def load_dataset(args):
-    with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
-        dataset = pickle.load(f)[args.obs_type]
+    if args.dr_mode == "dr":
+        with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_2.pkl", "rb") as f:
+            dataset = pickle.load(f)
+    elif args.dr_mode == "dr_norm":
+        with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}.pkl", "rb") as f:
+            dataset = pickle.load(f)
 
-    with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
-        test_set = jnp.array(pickle.load(f)[args.obs_type])
+    with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_test.pkl", "rb") as f:
+        test_set = jnp.array(pickle.load(f))
 
     return dataset, test_set
+
+# ### Actual dataset used in paper
+# def load_dataset(args):
+#     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
+#         dataset = pickle.load(f)[args.obs_type]
+
+#     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
+#         test_set = jnp.array(pickle.load(f)[args.obs_type])
+
+#     return dataset, test_set
 
 
 
@@ -168,6 +178,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--optimizer", default="rmsprop", type=str)
 
+    parser.add_argument("--dr_mode", type=str, default="dr")
+
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
@@ -183,15 +195,28 @@ if __name__ == "__main__":
 
 
     # create dir for saving results
-    path = join("minigrid_basics", "function_approximation", "experiments_dr_real", args.env, args.obs_type)
+    path = join("minigrid_basics", "function_approximation", f"experiments_{args.dr_mode}", args.env, args.obs_type)
     plot_path = join(path, "plots")
     data_path = join(path, "data")
     os.makedirs(plot_path, exist_ok=True)
     os.makedirs(data_path, exist_ok=True)
-    run_name = f"{args.lambd}-{args.step_size_start}-{args.step_size_end}-{args.batch_size}-{args.barrier}-{args.seed}"
+
+    group_name = f"{args.lambd}-{args.step_size_start}-{args.step_size_end}-{args.batch_size}-{args.barrier}-{args.optimizer}-{args.dr_mode}"
+    run_name = group_name + f"-{args.seed}"
+
+    run = wandb.init(
+        project=f"minigrid-eigen-dr-{args.env}-{args.obs_type}",
+        config=vars(args),
+        group=group_name,  
+        job_type="train",
+        name=run_name, 
+    )
+    run.define_metric("train/*", step_metric="train/step")
 
     # learn
     eigenlearning(args, env)
+
+    run.finish()
 
 
 

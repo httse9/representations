@@ -7,7 +7,10 @@ import jax.numpy as jnp
 from functools import partial
 from flax import nnx
 from jax import random
-import wandb
+
+"""
+Implement exponential moving average
+"""
 
 
 class DRLearner(EigenLearner):
@@ -100,12 +103,7 @@ class DRLearner(EigenLearner):
                     self.cos_sims.append(self.cos_sim(eigvec))
 
                     print(self.cos_sims[-1])
-
-                    wandb.log({
-                        "train/cosine_similarity": self.cos_sims[-1], 
-                        "train/norm": self.norms[-1],
-                        "train/step": update_count # Adjust x-axis
-                    })
+    
 
 
 

@@ -9,8 +9,16 @@ from flax import nnx
 from jax import random
 import wandb
 
+"""
+Implement quadratic loss (already have, just remove the anchor part)
+Then use the static_dataset (without a 2)
+- Check static dataset is created properly (should also sample goal states)
 
-class DRLearner(EigenLearner):
+
+"""
+
+
+class DR_NORM_Learner(EigenLearner):
 
     def __init__(self, env, dataset, test_set, args):
         super().__init__(env, dataset, test_set, args)
@@ -99,18 +107,21 @@ class DRLearner(EigenLearner):
                     self.norms.append((jnp.exp(eigvec) ** 2).sum(0).mean())
                     self.cos_sims.append(self.cos_sim(eigvec))
 
-                    print(self.cos_sims[-1])
+                    print(self.cos_sims[-1],  self.encoder.duals[0][0])
 
                     wandb.log({
                         "train/cosine_similarity": self.cos_sims[-1], 
                         "train/norm": self.norms[-1],
                         "train/step": update_count # Adjust x-axis
                     })
+    
 
 
 
 @partial(nnx.jit, static_argnums=())
 def compute_cos_sim(eigvec, true_eigvec):
+    eigvec -= eigvec.max()
+    true_eigvec -= true_eigvec.max()
     eigvec_norm = jnp.linalg.norm(eigvec, axis=0)
     true_eigvec_norm = jnp.linalg.norm(true_eigvec, axis=0)
     return jnp.abs((eigvec * true_eigvec).sum(0)) / (eigvec_norm * true_eigvec_norm + 1e-8) # 1e-8 for numerical stability
@@ -119,7 +130,7 @@ def compute_cos_sim(eigvec, true_eigvec):
 @partial(nnx.jit, static_argnums=())
 def compute_eigvec(encoder, test_set, terminal_idx):
     eigvec = lax.stop_gradient(encoder(test_set))
-    return eigvec.at[terminal_idx].set(0)
+    return eigvec
     
 @partial(nnx.jit, static_argnums=())
 def step(encoder, optimizer, obs, rewards, next_obs, next_rewards, terminals, obs_2):
@@ -130,7 +141,7 @@ def step(encoder, optimizer, obs, rewards, next_obs, next_rewards, terminals, ob
         terminals = jnp.expand_dims(terminals, 1)
 
         log_phi = encoder(obs)
-        log_next_phi = encoder(next_obs) * (1 - terminals)    # anchor terminal states to 0
+        log_next_phi = encoder(next_obs) # !!! No anchor
         log_phi_2 = encoder(obs_2)
 
         # phi = jnp.exp(log_phi)
@@ -138,11 +149,17 @@ def step(encoder, optimizer, obs, rewards, next_obs, next_rewards, terminals, ob
         # phi_2 = jnp.exp(log_phi_2)
 
         barrier_coefficient = encoder.barrier_coefs
+        dual = encoder.duals
 
-        dr_loss =  jnp.exp(-rewards) - jnp.exp(log_next_phi - log_phi) #+ 2 * barrier_coefficient * (jnp.exp(2 * log_phi_2) - 1)
+        dr_loss =  jnp.exp(-rewards) - jnp.exp(log_next_phi - log_phi) + 2 * barrier_coefficient * (jnp.exp(2 * log_phi_2).mean() - 1)
+        # dr_loss += 2 * lax.stop_gradient(dual[0][0])
+
+        # dual_loss = - dual[0][0] * lax.stop_gradient(jnp.exp(2 * log_phi_2).mean() - 1)
 
         dr_loss = lax.stop_gradient(dr_loss) * log_phi
-        dr_loss = dr_loss.mean()
+        dr_loss = dr_loss.mean() #+ dual_loss * 10
+
+        # dual * (jnp.exp(2 * log_phi).mean() - 1)
 
         return dr_loss
     
