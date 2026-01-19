@@ -50,13 +50,13 @@ class EigenLearner:
 
         if self.args.obs_type == "onehot":
             obs_dim = self.env.num_states
-            feat_dim = 256
+            feat_dim = 128
         elif self.args.obs_type == "coordinates":
             obs_dim = 2
-            feat_dim = 256
+            feat_dim = 128
         elif self.args.obs_type == "image":
-            obs_dim = 256
-            feat_dim = 256
+            obs_dim = 128
+            feat_dim = 128
 
         eig_dim = self.args.eig_dim
 

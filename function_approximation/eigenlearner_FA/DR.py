@@ -137,13 +137,13 @@ def step(encoder, optimizer, obs, rewards, next_obs, next_rewards, terminals, ob
 
         log_phi = encoder(obs)
         log_next_phi = encoder(next_obs) * (1 - terminals)    # anchor terminal states to 0
-        log_phi_2 = encoder(obs_2)
+        # log_phi_2 = encoder(obs_2)
 
         # phi = jnp.exp(log_phi)
         # next_phi = jnp.exp(log_next_phi)
         # phi_2 = jnp.exp(log_phi_2)
 
-        barrier_coefficient = encoder.barrier_coefs
+        # barrier_coefficient = encoder.barrier_coefs
 
         dr_loss =  jnp.exp(-rewards) - jnp.exp(log_next_phi - log_phi) #+ 2 * barrier_coefficient * (jnp.exp(2 * log_phi_2) - 1)
 

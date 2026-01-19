@@ -20,11 +20,11 @@ def main(env):
     visualizer = Visualizer(env)
     cmap="rainbow"
 
-    env_name = "gridmaze"
+    env_name = "gridmaze_2"
     obs_type = "coordinates"
-    seed = 6
+    seed = 1
 
-    with open(f"minigrid_basics/function_approximation/experiments_dr_real/{env_name}/{obs_type}/data/20.0-3e-05-3e-05-500-0.5-{seed}.pkl", "rb") as f:
+    with open(f"minigrid_basics/function_approximation/experiments_dr_anchor_real/{env_name}/{obs_type}/data/20.0-1e-05-1e-05-2000-0-rmsprop-dr_anchor-0.5-{seed}.pkl", "rb") as f:
         data = pickle.load(f)
 
     eigvec = np.array(data['eigvec'])

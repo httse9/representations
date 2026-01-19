@@ -128,7 +128,7 @@ def eigvec_myopic_policy(env, eigvec):
     myopic_policy = dict(termination=termination, policy=policy)
     return myopic_policy
 
-### Ground-truth small dataset
+### Ground-truth small dataset (for testing)
 def load_static_dataset(args):
     if args.dr_mode == "dr_anchor":
         with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_2.pkl", "rb") as f:
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     run_name = group_name + f"-{args.seed}"
 
     run = wandb.init(
-        project=f"minigrid-eigen-dr-{args.env}-{args.obs_type}-{args.dataset}",
+        project=f"paper8-minigrid-eigen-dr-{args.env}-{args.obs_type}-{args.dataset}",
         config=vars(args),
         group=group_name,  
         job_type="train",

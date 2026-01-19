@@ -88,9 +88,11 @@ class DR_Encoder(nnx.Module):
                 nnx.relu,
                 nnx.Linear(feat_dim, eig_dim, rngs=rngs)
             ])
-            
+
         self.eig_linear = nnx.Sequential(*[
             nnx.Linear(obs_dim, feat_dim, rngs=rngs),
+            nnx.relu,
+            nnx.Linear(feat_dim, feat_dim, rngs=rngs),
             nnx.relu,
             nnx.Linear(feat_dim, feat_dim, rngs=rngs),
             nnx.relu,
