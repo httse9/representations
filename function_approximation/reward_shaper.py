@@ -63,38 +63,6 @@ class RewardShaper:
 
         return SR.copy()
     
-    def compute_DR(self, pi = None, lambd=1.0):
-        """
-        Compute DR with respect to pi.
-        If pi is None, use uniform random policy.
-        """
-        if pi is None:
-            pi = np.ones((self.env.num_states, self.env.num_actions)) / self.env.num_actions
-
-        R = self.env.rewards
-        P = self.env.transition_probs
-
-        P_pi = (P * pi[..., None]).sum(1)
-        DR = np.linalg.inv(np.diag(np.exp(-R / lambd)) - P_pi)
-
-        return DR.copy()
-    
-    def compute_WGL(self, pi=None, lambd=1.0):
-        """
-        Compute reward-weighted graph Laplacian wrt pi
-        If pi is None, use uniform random policy.
-        """
-        r = self.env.rewards
-        p = self.env.transition_probs
-
-        if pi is None:
-            pi = np.ones((self.env.num_states, self.env.num_actions)) / self.env.num_actions
-        P = (p * pi[..., None]).sum(1) 
-        R_inv_sqrt = np.diag(np.exp(r / lambd / 2))
-
-        WGL = R_inv_sqrt @ (np.eye(self.env.num_states) - P) @ R_inv_sqrt
-        return WGL.copy()
-
 
     
     def SR_top_eigenvector(self, pi=None, gamma=0.99):
@@ -109,58 +77,6 @@ class RewardShaper:
         # normalize
         e0 /= np.sqrt(e0 @ e0)
         assert np.isclose(e0 @ e0, 1.0)
-
-        if e0.sum() > 0:
-            e0 *= -1
-
-        return e0
-
-    
-    def DR_top_log_eigenvector(self, pi=None, lambd=1.0):
-        """
-        Compute log of the top eigenvector of the DR.
-        """
-        DR = symmetrize(self.compute_DR(pi=pi, lambd=lambd))
-        assert (DR > 0).all()
-
-        DR = arb_mat(DR.tolist())
-        lamb, e = DR.eig(right=True, algorithm="approx", )
-        lamb = np.array(lamb).astype(np.clongdouble).real.flatten()
-        e = np.array(e.tolist()).astype(np.clongdouble).real.astype(np.float32)
-
-        idx = np.flip(lamb.argsort())
-        lamb = lamb[idx]
-        e = e.T[idx]
-        e0 = e[0]
-
-        # assert all entries are positive before taking log
-        if e0[0] < 0:
-            e0 *= -1
-        assert (e0 > 0).all()
-
-        log_e0 = np.log(e0)
-        log_e0 /= np.sqrt(log_e0 @ log_e0)
-        assert np.isclose(log_e0 @ log_e0, 1.0)
-
-        return log_e0
-    
-    def WGL_smallest_eigenvector(self, pi=None, lambd=1.0):
-        """
-        Compute (second) smallest eigenvector of WGL
-        Smallest is like a constant vector (reflects reward), for convenience we omit 'second'
-        """
-
-        WGL = self.compute_WGL(pi=pi, lambd=lambd)
-
-        WGL = arb_mat(WGL.tolist())
-        lamb, e = WGL.eig(right=True, algorithm="approx")
-        lamb = np.array(lamb).astype(np.clongdouble).real.flatten()
-        e = np.array(e.tolist()).astype(np.clongdouble).real.astype(np.float32)
-
-        idx = lamb.argsort()
-        lamb = lamb[idx]
-        e = e.T[idx]
-        e0 = e[1]
 
         if e0.sum() > 0:
             e0 *= -1
@@ -203,64 +119,3 @@ class RewardShaper:
     
 
         
-
-if __name__ == "__main__":
-    ### Testing
-    envs = [
-        'dayan', 'dayan_2',
-        'fourrooms', 'fourrooms_2',
-        'gridroom', 'gridroom_2',
-        'gridmaze', 'gridmaze_2'
-    ]
-    lambds = [
-        1.3
-    ] * 8
-
-    for env_name, lambd in zip(envs, lambds):
-
-        gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env_name}.gin"))
-        env_id = maxent_mon_minigrid.register_environment()
-
-        env = gym.make(env_id, seed=42)
-        env = maxent_mdp_wrapper.MDPWrapper(env, )
-
-        shaper = RewardShaper(env)
-
-
-        ### plot shaping reward
-        plt.figure(figsize=(10,10))
-
-        # SR top eigenvector
-        eigenvector_SR = shaper.SR_top_eigenvector()
-        plt.subplot(2, 2, 1)
-        plot_value_pred_map(env, eigenvector_SR, contain_goal_value=True)
-        plt.ylabel("EV of SR")
-
-        # SR shaping reward
-        e_SR_r = shaper.shaping_reward_transform_using_terminal_state(eigenvector_SR)
-        plt.subplot(2, 2, 2)
-        plot_value_pred_map(env, e_SR_r, contain_goal_value=True)
-
-        # print(np.mean(shaper.compute_neighboring_diff(e_SR_r)))
-
-        # DR log top eigenvector
-        log_eigenvector_DR = shaper.DR_top_log_eigenvector(lambd=lambd)
-        plt.subplot(2, 2, 3)
-        plot_value_pred_map(env, log_eigenvector_DR, contain_goal_value=True)
-        plt.ylabel("Log EV of DR")
-        plt.xlabel("Eigenvector")
-
-        # DR shaping reward
-        log_e_DR_r = shaper.shaping_reward_transform_using_terminal_state(log_eigenvector_DR)
-        plt.subplot(2, 2, 4)
-        plot_value_pred_map(env, log_e_DR_r, contain_goal_value=True)
-        plt.xlabel("Transformed (-|e_g - e_s|)")
-        
-        # print(np.mean(shaper.compute_neighboring_diff(log_e_DR_r)))
-
-        plt.suptitle(env_name)
-        plt.tight_layout()
-
-        # plt.savefig(f"minigrid_basics/plots/where_log_DR/{env_name}.png", dpi=300)
-        # plt.clf()
-        plt.show()

@@ -137,6 +137,8 @@ class QLearner:
         returns = [self.eval_policy()]
         Qs = [self.Q.copy()]
 
+        visit_low_reward = 0
+
         for n in range(max_iter):
             # choose action
             a = self.epsilon_greedy_action_selection(s['state'])
@@ -144,6 +146,8 @@ class QLearner:
             # env step
             ns, r, done, d = env.step(a)
             terminated = d['terminated']
+
+            visit_low_reward += (r == -20)
 
             # compute shaped reward
             shaped_reward = self.aux_reward.shaped_reward(r, s['state'], ns['state'])
@@ -161,11 +165,12 @@ class QLearner:
             if (n + 1) % log_interval == 0:
                 timesteps.append(n + 1)
                 returns.append(self.eval_policy())
+                print(returns[-1])
 
                 if (n + 1) % 1000 == 0:
                     Qs.append(self.Q.copy())
 
-        return np.array(timesteps), np.array(returns), np.array(Qs)
+        return np.array(timesteps), np.array(returns), np.array(Qs), visit_low_reward
 
 
 def eigvec_myopic_policy(env, eigvec):

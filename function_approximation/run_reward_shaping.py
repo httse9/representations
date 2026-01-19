@@ -8,8 +8,10 @@ import random
 import pickle
 from minigrid_basics.reward_envs import maxent_mon_minigrid
 from minigrid_basics.custom_wrappers import maxent_mdp_wrapper
-from minigrid_basics.examples.reward_shaper import RewardShaper
-from minigrid_basics.examples.q_learner import AuxiliaryReward, QLearner
+from minigrid_basics.function_approximation.reward_shaper import RewardShaper
+from minigrid_basics.function_approximation.q_learner import AuxiliaryReward, QLearner
+from os.path import join
+import wandb
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -19,13 +21,13 @@ def set_random_seed(seed):
     random.seed(seed)
 
 
-def create_aux_reward(env, env_name, mode, r_aux_weight):
+def create_aux_reward(env, env_name, mode, r_aux_weight, seed):
     # create reward shaper
     shaper = RewardShaper(env)
 
     if mode == "none":
         # no reward shaping
-        aux_reward = AuxiliaryReward(env, None, "none", 0)
+        aux_reward = AuxiliaryReward(env, None, "none", r_aux_weight)
 
     elif mode == "SR":
         # SR for potential based reward shaping
@@ -37,17 +39,16 @@ def create_aux_reward(env, env_name, mode, r_aux_weight):
     elif mode == "DR":
         # DR for potential based reward shaping
         assert 0 < r_aux_weight <= 1
-        eigvec_DR = shaper.DR_top_log_eigenvector(lambd=1.3)
-        reward_DR = shaper.normalize(eigvec_DR)
-        aux_reward = AuxiliaryReward(env, reward_DR, "potential", r_aux_weight)
 
-    elif mode == "WGL":
-        # reward-weighted graph laplacian
-        assert 0 < r_aux_weight <= 1
-        eigvec_WGL = shaper.WGL_smallest_eigenvector(lambd=20)
-        reward_WGL = shaper.normalize(eigvec_WGL)
-        aux_reward = AuxiliaryReward(env, reward_WGL, "potential", r_aux_weight)
-        
+        # path of eigenvector learned using neural net with image inputs
+        path = join("minigrid_basics", "function_approximation", "experiments_dr_anchor_real", env_name, "image", "data")
+        with open(join(path, f"20.0-1e-05-1e-05-2000-0-rmsprop-dr_anchor-0.5-{seed}.pkl"), "rb") as f:
+            data = pickle.load(f)
+
+        eigvec_DR = data['eigvec']
+        eigvec_DR -= np.log(np.linalg.norm(np.exp(eigvec_DR)))  # normalize
+        reward_DR = shaper.normalize(eigvec_DR) # further normalize
+        aux_reward = AuxiliaryReward(env, reward_DR, "potential", r_aux_weight)
 
     else:
         raise ValueError(f"Mode '{mode}' not recognized.")
@@ -61,7 +62,7 @@ if __name__ == "__main__":
 
     # reward shaping related
     parser.add_argument("--mode", default="none", help="Mode of reward shaping. CHoose from [none, SR, DR]")
-    parser.add_argument("--r_aux_weight", default=0., type=float, help="Weight for convex combination of original reward and auxiliary reward.")
+    parser.add_argument("--r_aux_weight", default=0.5, type=float, help="Weight for convex combination of original reward and auxiliary reward.")
 
     # Q Learning related
     parser.add_argument("--step_size", default=0.1, type=float, help="Step size")
@@ -70,6 +71,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--seed", default=0, type=int, help="Random seed.")
     args = parser.parse_args()
+
+    if args.mode == "none":
+        # if no reward shaping, do not weight aux cause no aux reward
+        args.r_aux_weight = 0
 
     # set random seed
     set_random_seed(args.seed)
@@ -80,43 +85,55 @@ if __name__ == "__main__":
 
     # environment for training
     env = gym.make(env_id, seed=args.seed)
-
-    ### NOTE: Handle env creation differently
-    # In the DR paper, terminal states are formulated as states that transition to an absorbing state,
-    # and P(s' | s) = 0 for all s' for a terminal s.
-    # In the WGL paper, terminal states are formulated as absorbing states,
-    # so P(s | s) = 1 for terminal s.
-    # To compare with the DR paper, we follow their formulation for SR and DR.
-    if args.mode == "WGL":
-        env = maxent_mdp_wrapper.MDPWrapper(env, goal_absorbing=True)
-    else:
-        env = maxent_mdp_wrapper.MDPWrapper(env, goal_absorbing=False)
+    env = maxent_mdp_wrapper.MDPWrapper(env)
 
     # separate environment for evaluation
     env_eval = gym.make(env_id, )
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
 
     # create auxiliary reward
-    aux_reward = create_aux_reward(env, args.env, args.mode, args.r_aux_weight)
+    aux_reward = create_aux_reward(env, args.env, args.mode, args.r_aux_weight, args.seed)
 
     # create QLearner
     qlearner = QLearner(env, env_eval, aux_reward, args.step_size)
 
     # learn
-    t, ret, Qs = qlearner.learn(args.max_iter, args.log_interval)
+    t, ret, Qs, vlr = qlearner.learn(args.max_iter, args.log_interval)
     # plt.plot(t, ret, label=args.mode)
     # plt.show()
 
-    # save result
-    path = os.path.join("minigrid_basics", "experiments", "reward_shaping", args.env, args.mode, )
-    os.makedirs(path, exist_ok=True)
-    filename = f"{args.r_aux_weight}-{args.step_size}-{args.seed}.pkl"
+    group_name = f"{args.env}-{args.mode}"
+    run_name = f"{args.r_aux_weight}-{args.step_size}-{args.seed}"
 
-    data = dict(
-        t = t,
-        ret = ret,
-        Qs=Qs
+    run = wandb.init(
+        project=f"reward-shaping",
+        config=vars(args),
+        group=group_name,  
+        job_type="train",
+        name=run_name, 
     )
+    run.define_metric("train/*", step_metric="train/step")
 
-    with open(os.path.join(path, filename), "wb") as f:
-        pickle.dump(data, f)
+    for tt, rett in zip(t, ret):
+        wandb.log({
+            "train/step": tt,
+            "train/return": rett
+        })
+
+    wandb.log({"visit_low_reward": vlr})
+
+    run.finish()
+
+    # # save result
+    # path = os.path.join("minigrid_basics", "function_approximation", "experiments_rs", args.env, args.mode, )
+    # os.makedirs(path, exist_ok=True)
+    # filename = f"{args.step_size}-{args.seed}.pkl"
+
+    # data = dict(
+    #     t = t,
+    #     ret = ret,
+    #     Qs=Qs
+    # )
+
+    # with open(os.path.join(path, filename), "wb") as f:
+    #     pickle.dump(data, f)

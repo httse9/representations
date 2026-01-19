@@ -150,20 +150,44 @@ def step(encoder, optimizer, obs, rewards, next_obs, next_rewards, terminals, ob
         log_next_phi = encoder(next_obs) # !!! No anchor
         log_phi_2 = encoder(obs_2)
 
+        v_mean = log_phi.max() #log_phi.mean()
+        log_phi -= v_mean
+        log_next_phi -= v_mean
+
+        ### rayleigh
+        # u = jnp.exp(log_phi)
+        # next_u = jnp.exp(log_next_phi)
+
+        # Lu = jnp.exp(-rewards) * u - next_u
+        # rayleigh = lax.stop_gradient((u * Lu).sum() / (u * u).sum())
+        # term1 = Lu / (u + 1e-8)
+        # g_target = term1 - rayleigh
+        # g_target = lax.stop_gradient(g_target - g_target.mean()) 
+        # surrogate_loss = (lax.stop_gradient(g_target) * log_phi).sum()
+        # return surrogate_loss
+        ### rayleigh end
+
         # phi = jnp.exp(log_phi)
         # next_phi = jnp.exp(log_next_phi)
         # phi_2 = jnp.exp(log_phi_2)
 
         barrier_coefficient = encoder.barrier_coefs
-        dual = encoder.duals
+        dual = encoder.duals - 1
 
-        dr_loss =  jnp.exp(-rewards) - jnp.exp(log_next_phi - log_phi) + 2 * barrier_coefficient * (jnp.exp(2 * log_phi_2).mean() - 1)
+        dr_loss =  jnp.exp(-rewards) - jnp.exp(log_next_phi - log_phi) #+ 2 * barrier_coefficient * (jnp.exp(2 * log_phi_2).mean() - 1)
+        # dr_loss += 2 * barrier_coefficient * (jnp.exp(2 * log_phi_2).mean() - 1)
         # dr_loss += 2 * lax.stop_gradient(dual[0][0])
 
-        # dual_loss = - dual[0][0] * lax.stop_gradient(jnp.exp(2 * log_phi_2).mean() - 1)
+        dual_loss = - dual[0][0] * lax.stop_gradient(jnp.exp(2 * log_phi_2).mean() - 1)
 
-        dr_loss = lax.stop_gradient(dr_loss) * log_phi
-        dr_loss = dr_loss.mean() #+ dual_loss * 10
+        dr_loss -= dr_loss.mean()
+        # dr_loss +=  2 * dual[0][0] * (jnp.exp(2 * log_phi_2).mean() - 1)
+        dr_loss += dual[0][0]
+        dr_loss = lax.stop_gradient(dr_loss) 
+        dr_loss *= log_phi
+        dr_loss = dr_loss.mean() + dual_loss * 10 * barrier_coefficient
+
+        barrier_coefficient *= 0.99
 
         # dual * (jnp.exp(2 * log_phi).mean() - 1)
 
