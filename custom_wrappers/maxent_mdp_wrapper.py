@@ -123,6 +123,10 @@ class MDPWrapper(tabular_wrapper.TabularWrapper):
 
     self.nonterminal_idx = (self.transition_probs.sum(-1).sum(-1) != 0)
 
+  def set_start_state(self, start_state):
+    x, y = self.state_to_pos[start_state]
+    self.env.raw_grid[x, y] = 's'
+
   def custom_rgb(self):
     """
     Visualize environment

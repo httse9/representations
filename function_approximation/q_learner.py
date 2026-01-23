@@ -165,7 +165,7 @@ class QLearner:
             if (n + 1) % log_interval == 0:
                 timesteps.append(n + 1)
                 returns.append(self.eval_policy())
-                print(returns[-1])
+                # print(returns[-1])
 
                 if (n + 1) % 1000 == 0:
                     Qs.append(self.Q.copy())

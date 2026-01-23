@@ -21,9 +21,11 @@ def set_random_seed(seed):
     random.seed(seed)
 
 
-def create_aux_reward(env, env_name, mode, r_aux_weight, seed):
+def create_aux_reward(env, env_name, mode, r_aux_weight, seed, obs_type):
     # create reward shaper
     shaper = RewardShaper(env)
+
+    # seed = ((seed - 1) // 10) + 1
 
     if mode == "none":
         # no reward shaping
@@ -41,7 +43,7 @@ def create_aux_reward(env, env_name, mode, r_aux_weight, seed):
         assert 0 < r_aux_weight <= 1
 
         # path of eigenvector learned using neural net with image inputs
-        path = join("minigrid_basics", "function_approximation", "experiments_dr_anchor_real", env_name, "image", "data")
+        path = join("minigrid_basics", "function_approximation", "experiments_dr_anchor_real", env_name, obs_type, "data")
         with open(join(path, f"20.0-1e-05-1e-05-2000-0-rmsprop-dr_anchor-0.5-{seed}.pkl"), "rb") as f:
             data = pickle.load(f)
 
@@ -68,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("--step_size", default=0.1, type=float, help="Step size")
     parser.add_argument("--max_iter", default=100000, type=int, help="Number of steps to run Q-learning")
     parser.add_argument("--log_interval", default=100, type=int, help="Evaluate current policy every [log_interval] steps.")
+    parser.add_argument("--obs_type", type=str, default='image')
 
     parser.add_argument("--seed", default=0, type=int, help="Random seed.")
     args = parser.parse_args()
@@ -75,6 +78,9 @@ if __name__ == "__main__":
     if args.mode == "none":
         # if no reward shaping, do not weight aux cause no aux reward
         args.r_aux_weight = 0
+
+    if args.mode != "DR":
+        args.obs_type = args.mode
 
     # set random seed
     set_random_seed(args.seed)
@@ -84,15 +90,19 @@ if __name__ == "__main__":
     env_id = maxent_mon_minigrid.register_environment()
 
     # environment for training
-    env = gym.make(env_id, seed=args.seed)
+    env = gym.make(env_id, seed=args.seed, no_start=False)
     env = maxent_mdp_wrapper.MDPWrapper(env)
+    # # generate random start state
+    # start_state = env.reset()['state']
+    # env.set_start_state(start_state)
 
     # separate environment for evaluation
-    env_eval = gym.make(env_id, )
+    env_eval = gym.make(env_id, no_start=False)
     env_eval = maxent_mdp_wrapper.MDPWrapper(env_eval)
+    # env.set_start_state(start_state)
 
     # create auxiliary reward
-    aux_reward = create_aux_reward(env, args.env, args.mode, args.r_aux_weight, args.seed)
+    aux_reward = create_aux_reward(env, args.env, args.mode, args.r_aux_weight, args.seed, args.obs_type)
 
     # create QLearner
     qlearner = QLearner(env, env_eval, aux_reward, args.step_size)
@@ -102,11 +112,11 @@ if __name__ == "__main__":
     # plt.plot(t, ret, label=args.mode)
     # plt.show()
 
-    group_name = f"{args.env}-{args.mode}"
+    group_name = f"{args.env}-{args.mode}-{args.obs_type}"
     run_name = f"{args.r_aux_weight}-{args.step_size}-{args.seed}"
 
     run = wandb.init(
-        project=f"reward-shaping",
+        project=f"reward-shaping-final-finelog",
         config=vars(args),
         group=group_name,  
         job_type="train",
@@ -124,16 +134,17 @@ if __name__ == "__main__":
 
     run.finish()
 
-    # # save result
-    # path = os.path.join("minigrid_basics", "function_approximation", "experiments_rs", args.env, args.mode, )
-    # os.makedirs(path, exist_ok=True)
-    # filename = f"{args.step_size}-{args.seed}.pkl"
+    # save result
+    path = os.path.join("minigrid_basics", "function_approximation", "experiments_rs", args.env, f"{args.mode}-{args.obs_type}")
+    os.makedirs(path, exist_ok=True)
+    filename = f"{args.seed}.pkl" #f"{args.step_size}-{args.seed}.pkl"
 
-    # data = dict(
-    #     t = t,
-    #     ret = ret,
-    #     Qs=Qs
-    # )
+    data = dict(
+        t = t,
+        ret = ret,
+        vlr=vlr,
+        # Qs=Qs
+    )
 
-    # with open(os.path.join(path, filename), "wb") as f:
-    #     pickle.dump(data, f)
+    with open(os.path.join(path, filename), "wb") as f:
+        pickle.dump(data, f)
