@@ -173,12 +173,12 @@ if __name__ == "__main__":
     parser.add_argument("--optimizer", default="rmsprop", type=str)
     
     parser.add_argument("--lambd", help="lambda for DR", default=20.0, type=float)
-    parser.add_argument("--step_size_start", default=1e-4, type=float, help="Starting step size")
-    parser.add_argument("--step_size_end", default=None, type=float, help="Ending step size")
+    parser.add_argument("--step_size_start", default=1e-5, type=float, help="Starting step size")
+    parser.add_argument("--step_size_end", default=None, type=float, help="Ending step size. Default: None, meaning equal to start")
     parser.add_argument("--grad_norm_clip", default=0.5, type=float, help="Ending step size")
 
     parser.add_argument("--n_epochs", type=int, default=400, help="Number of passes thru dataset")
-    parser.add_argument("--batch_size", default=250, help="Batch size", type=int)
+    parser.add_argument("--batch_size", default=2000, help="Batch size", type=int)
     parser.add_argument("--log_interval", default=100, type=int, help="interval to compute cosine similarity")
 
     parser.add_argument("--eig_dim", type=int, default=1, help="How many dimension of laplacian representation to learn")
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     run_name = group_name + f"-{args.seed}"
 
     run = wandb.init(
-        project=f"paper8-minigrid-eigen-dr-{args.env}-{args.obs_type}-{args.dataset}",
+        project=f"drnorm-hyper-minigrid-eigen-dr-{args.env}-{args.obs_type}-{args.dataset}",
         config=vars(args),
         group=group_name,  
         job_type="train",

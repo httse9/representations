@@ -154,16 +154,16 @@ if __name__ == "__main__":
     path = join("minigrid_basics", "function_approximation", "plots", "formulation_study")
     os.makedirs(path, exist_ok=True)
 
-    figure_1 = False
+    figure_1 = True
     figure_2 = False
     figure_3 = False
     figure_4 = False
 
-    gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{args.env}.gin"))
-    env_id = maxent_mon_minigrid.register_environment()
-    env = create_env(env_id, 1)
-    shaper = RewardShaper(env)
-    visualizer = Visualizer(env)
+    # gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{args.env}.gin"))
+    # env_id = maxent_mon_minigrid.register_environment()
+    # env = create_env(env_id, 1)
+    # shaper = RewardShaper(env)
+    # visualizer = Visualizer(env)
     # e = np.array(shaper.DR_top_log_eigenvector(lambd=1, normalize=False, symmetrize=True))
     # print(e)
 
@@ -211,7 +211,7 @@ if __name__ == "__main__":
                 ax.set_yticks([])
                 ax.spines[['top', 'right', 'left', 'bottom']].set_visible(False)
 
-                ax.set_ylabel("Goal Non-Absorbing")
+                # ax.set_ylabel("Goal Non-Absorbing")
 
         env = create_env(env_id, 2)
         shaper = RewardShaper(env)
@@ -234,7 +234,7 @@ if __name__ == "__main__":
                 ax.set_yticks([])
                 ax.spines[['top', 'right', 'left', 'bottom']].set_visible(False)
 
-                plt.ylabel("Goal Absorbing")
+                # plt.ylabel("Goal Absorbing")
 
         plt.savefig(join(path, f"{args.env}_form_compare.png"), dpi=300)
         plt.show()
@@ -333,54 +333,54 @@ if __name__ == "__main__":
         plt.show()
 
 
-    ### study [R - Sym(P)]^{-1} vs Sym([R - P]^{-1})
+    # ### study [R - Sym(P)]^{-1} vs Sym([R - P]^{-1})
 
-    def check_symmetric(M, name):
-        print(f"{name} symmetric: {np.allclose(M, M.T)}")
+    # def check_symmetric(M, name):
+    #     print(f"{name} symmetric: {np.allclose(M, M.T)}")
 
-    P = env.transition_probs
-    R = env.rewards
+    # P = env.transition_probs
+    # R = env.rewards
 
-    pi = np.ones((env.num_states, env.num_actions)) / env.num_actions
+    # pi = np.ones((env.num_states, env.num_actions)) / env.num_actions
 
-    P_pi = (P * pi[..., None]).sum(1)
+    # P_pi = (P * pi[..., None]).sum(1)
 
-    check_symmetric(P_pi, "P_pi")
-
-
-    DR_orig = shaper.compute_DR(lambd=1.3)
-    check_symmetric(DR_orig, "DR_orig")
+    # check_symmetric(P_pi, "P_pi")
 
 
-    DR_new = shaper.compute_DR_2(lambd=1.3)
-    check_symmetric(DR_new, "DR_new")
-
-    plt.subplot(1, 2, 1)
-    plt.imshow(DR_orig)
-    plt.subplot(1, 2, 2)
-    plt.imshow(DR_new)
-    plt.show()
+    # DR_orig = shaper.compute_DR(lambd=1.3)
+    # check_symmetric(DR_orig, "DR_orig")
 
 
-    e_orig = shaper.DR_top_log_eigenvector(lambd=1.3, normalize=False)
-    e_new = shaper.DR_top_log_eigenvector_2(lambd=1.3, normalize=False)
+    # DR_new = shaper.compute_DR_2(lambd=1.3)
+    # check_symmetric(DR_new, "DR_new")
 
-    print(e_orig)
-    print(e_new)
+    # plt.subplot(1, 2, 1)
+    # plt.imshow(DR_orig)
+    # plt.subplot(1, 2, 2)
+    # plt.imshow(DR_new)
+    # plt.show()
 
-    plt.subplot(1, 2, 1)
-    visualizer.visualize_shaping_reward_2d(e_orig, ax=None, normalize=True, vmin=0, vmax=1, cmap="Reds")
-    plt.subplot(1, 2, 2)
-    visualizer.visualize_shaping_reward_2d(e_new, ax=None, normalize=True, vmin=0, vmax=1, cmap="Reds")
-    plt.show()
 
-    mp_orig = eigvec_myopic_policy(env, e_orig)
-    mp_new = eigvec_myopic_policy(env, e_new)
+    # e_orig = shaper.DR_top_log_eigenvector(lambd=1.3, normalize=False)
+    # e_new = shaper.DR_top_log_eigenvector_2(lambd=1.3, normalize=False)
 
-    plt.subplot(1, 2, 1)
-    visualizer.visualize_option_with_env_reward(mp_orig)
-    plt.subplot(1, 2, 2)
-    visualizer.visualize_option_with_env_reward(mp_new)
-    plt.show()
+    # print(e_orig)
+    # print(e_new)
+
+    # plt.subplot(1, 2, 1)
+    # visualizer.visualize_shaping_reward_2d(e_orig, ax=None, normalize=True, vmin=0, vmax=1, cmap="Reds")
+    # plt.subplot(1, 2, 2)
+    # visualizer.visualize_shaping_reward_2d(e_new, ax=None, normalize=True, vmin=0, vmax=1, cmap="Reds")
+    # plt.show()
+
+    # mp_orig = eigvec_myopic_policy(env, e_orig)
+    # mp_new = eigvec_myopic_policy(env, e_new)
+
+    # plt.subplot(1, 2, 1)
+    # visualizer.visualize_option_with_env_reward(mp_orig)
+    # plt.subplot(1, 2, 2)
+    # visualizer.visualize_option_with_env_reward(mp_new)
+    # plt.show()
 
 
