@@ -146,10 +146,12 @@ def load_static_dataset(args):
 def load_dataset(args):
 
     if args.dr_mode == "dr_norm":
-        raise NotImplementedError()
+        with open(f"minigrid_basics/function_approximation/dataset/{args.env}_norm_dataset.pkl", "rb") as f:
+            dataset = pickle.load(f)[args.obs_type]
 
-    with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
-        dataset = pickle.load(f)[args.obs_type]
+    else:
+        with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
+            dataset = pickle.load(f)[args.obs_type]
 
     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
         test_set = jnp.array(pickle.load(f)[args.obs_type])
@@ -214,7 +216,7 @@ if __name__ == "__main__":
     run_name = group_name + f"-{args.seed}"
 
     run = wandb.init(
-        project=f"drnorm-hyper-minigrid-eigen-dr-{args.env}-{args.obs_type}-{args.dataset}",
+        project=f"testing-minigrid-eigen-dr-{args.env}-{args.obs_type}-{args.dataset}",
         config=vars(args),
         group=group_name,  
         job_type="train",

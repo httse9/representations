@@ -12,7 +12,8 @@ class DRLearner(EigenLearner):
         
 
     def compute_matrix(self):
-        DR = self.sym(np.linalg.inv(self.R - self.P))
+        # DR = self.sym(np.linalg.inv(self.R - self.P))
+        DR = self.R - self.sym(self.P)
         self.matrix = DR
     
     def compute_top_eigvec(self):
@@ -25,15 +26,17 @@ class DRLearner(EigenLearner):
         lamb = np.array(lamb).astype(np.clongdouble).real.flatten()
         e = np.array(e.tolist()).astype(np.clongdouble).real.astype(np.float32)
 
+        # lamb = np.abs(lamb)
         idx = np.flip(lamb.argsort())
         lamb = lamb[idx]
-        # print(lamb)
+        print(lamb)
+        # quit()
         e = e.T[idx]
         e0 = e[0]
 
         if e0[0] < 0:
             e0 *= -1
-        # print(e0)
+
         assert (e0 > 0).all()
 
         log_e0 = np.log(e0)
