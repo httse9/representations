@@ -105,8 +105,8 @@ def eigenlearning_tabular(args, env):
 
     eigvec = learner.true_eigvec
     # eigvec /= np.linalg.norm(eigvec)
-    print(eigvec, eigvec[env.terminal_idx[0]])
-    print(np.exp(eigvec), np.exp(eigvec)[env.terminal_idx[0]])
+    print(eigvec)#0, eigvec[env.terminal_idx[0]])
+    # print(np.exp(eigvec), np.exp(eigvec)[env.terminal_idx[0]])
     # plt.plot(eigvec)
     # eigvec = learner.R_inv_sqrt @ eigvec
     # eigvec /= np.linalg.norm(eigvec)

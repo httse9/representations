@@ -146,10 +146,12 @@ def load_static_dataset(args):
 def load_dataset(args):
 
     if args.dr_mode == "dr_norm":
-        raise NotImplementedError()
+        with open(f"minigrid_basics/function_approximation/dataset/{args.env}_norm_dataset.pkl", "rb") as f:
+            dataset = pickle.load(f)[args.obs_type]
 
-    with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
-        dataset = pickle.load(f)[args.obs_type]
+    else:
+        with open(f"minigrid_basics/function_approximation/dataset/{args.env}_dataset.pkl", "rb") as f:
+            dataset = pickle.load(f)[args.obs_type]
 
     with open(f"minigrid_basics/function_approximation/dataset/{args.env}_testset.pkl", "rb") as f:
         test_set = jnp.array(pickle.load(f)[args.obs_type])
