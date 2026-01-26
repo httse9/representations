@@ -218,7 +218,7 @@ if __name__ == "__main__":
     run_name = group_name + f"-{args.seed}"
 
     run = wandb.init(
-        project=f"minigrid-eigen-dr-norm",
+        project=f"testing-minigrid-eigen-dr-norm",
         config=vars(args),
         group=group_name,  
         job_type="train",
