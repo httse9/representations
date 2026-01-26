@@ -112,6 +112,7 @@ class Visualizer:
         ax.imshow(image)
         ax.axis('off')
         plt.tight_layout()
+        return image
 
     def visualize_vec(self, vec, ax=None, center=0):
         """

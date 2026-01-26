@@ -23,40 +23,59 @@ import gym
 def figure():
 
     # get old shaper? to compute eigenvector of SR and DR
-    env = "fourrooms_2"
+    env = "two_paths_2"
     gin.parse_config_file(os.path.join(maxent_mon_minigrid.GIN_FILES_PREFIX, f"{env}.gin"))
     env_id = maxent_mon_minigrid.register_environment()
 
     env_SR = gym.make(env_id, disable_env_checker=True)
     env_SR = maxent_mdp_wrapper.MDPWrapper(env_SR, goal_absorbing=False)
     shaper_SR = RewardShaper(env_SR)
-    SR = shaper_SR.compute_SR(gamma=0.999)
+    # SR = shaper_SR.compute_SR(gamma=0.999)
     eigvec_SR = shaper_SR.SR_top_eigenvector(gamma=0.999)
 
 
     env_DR = gym.make(env_id, disable_env_checker=True)
     env_DR = maxent_mdp_wrapper.MDPWrapper(env_DR, goal_absorbing=True, goal_absorbing_reward=-0.001)
     shaper_DR = RewardShaper(env_DR)
-    DR = shaper_DR.compute_DR()
-    eigvec_DR = shaper_DR.DR_top_log_eigenvector()
+    # DR = shaper_DR.compute_DR()
+    eigvec_DR = shaper_DR.DR_top_log_eigenvector(lambd=2)
 
     visualizer = Visualizer(env_SR)
     cmap = "rainbow"
     state_num = 31
 
-    plt.figure(figsize=(4, 2))
-    # plt.subplot(2, 2, 1)
-    # visualizer.visualize_shaping_reward_2d(SR[state_num], ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
-    plt.subplot(1, 2, 1)
-    visualizer.visualize_shaping_reward_2d(eigvec_SR, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
-    # plt.subplot(2, 2, 3)
-    # visualizer.visualize_shaping_reward_2d(np.log(DR[state_num]), ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
-    plt.subplot(1, 2, 2)
-    visualizer.visualize_shaping_reward_2d(eigvec_DR, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+    image_SR = visualizer.visualize_shaping_reward_2d(eigvec_SR * -1, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+    image_DR = visualizer.visualize_shaping_reward_2d(eigvec_DR, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
 
-    plt.tight_layout()
-    # plt.savefig("minigrid_basics/function_approximation/plots/dr_vs_sr.png", dpi=300)
-    plt.show()
+    h, w, c = image_SR.shape
+    plt.clf()
+
+    image = np.ones((h * 2 + 1, w, c))
+    image[:h] = image_SR
+    image[-h:] = image_DR
+
+    print(image.shape)
+
+    plt.figure(figsize=(2.5, 1.1))
+
+    plt.imshow(image)
+    plt.axis('off')
+    plt.tight_layout(pad=0)
+    # plt.show()
+
+#     plt.figure(figsize=(2, 1))
+#     # plt.subplot(2, 2, 1)
+#     # visualizer.visualize_shaping_reward_2d(SR[state_num], ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+#     plt.subplot(2, 1, 1)
+#     visualizer.visualize_shaping_reward_2d(eigvec_SR, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+#     # plt.subplot(2, 2, 3)
+#     # visualizer.visualize_shaping_reward_2d(np.log(DR[state_num]), ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+#     plt.subplot(2, 1, 2)
+#     visualizer.visualize_shaping_reward_2d(eigvec_DR, ax=None, normalize=True, vmin=0, vmax=1, cmap=cmap)
+
+#     plt.tight_layout()
+    plt.savefig("minigrid_basics/function_approximation/plots/dr_vs_sr.png", dpi=300)
+#     plt.show()
 
 
 

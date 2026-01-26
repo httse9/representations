@@ -18,7 +18,9 @@ import wandb
 
 learners = {
     "dr_anchor": DRLearner,
-    "dr_norm": DR_NORM_Learner
+    "dr_norm": DR_NORM_Learner,
+    "dr_gdo": DRGDOLearner,
+    "dr_gdo_log": DRGDOLOGLearner
 }
 
 def eigenlearning(args, env):
@@ -133,7 +135,7 @@ def load_static_dataset(args):
     if args.dr_mode == "dr_anchor":
         with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}_2.pkl", "rb") as f:
             dataset = pickle.load(f)
-    elif args.dr_mode == "dr_norm":
+    elif args.dr_mode in ["dr_norm", "dr_gdo", "dr_gdo_log"]:
         with open(f"minigrid_basics/function_approximation/static_dataset/{args.env}_{args.obs_type}.pkl", "rb") as f:
             dataset = pickle.load(f)
 
@@ -145,7 +147,7 @@ def load_static_dataset(args):
 ### Actual dataset used in paper
 def load_dataset(args):
 
-    if args.dr_mode == "dr_norm":
+    if args.dr_mode in ["dr_norm", "dr_gdo", "dr_gdo_log"]:
         with open(f"minigrid_basics/function_approximation/dataset/{args.env}_norm_dataset.pkl", "rb") as f:
             dataset = pickle.load(f)[args.obs_type]
 

@@ -6,7 +6,7 @@ MaxEntMonMiniGridEnv.agent_pos = None
 MaxEntMonMiniGridEnv.goal_pos = None
 MaxEntMonMiniGridEnv.ascii_grid = """
 *****************************
-*s                         g*
+*g          lllll           *
 *****************************"""
 
 MaxEntMonMiniGridEnv.reward_dict = {
